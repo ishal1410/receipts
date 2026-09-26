@@ -204,9 +204,8 @@ export function ritual(root, { commit = true, stagePng = false, log = console.lo
 // --- the one runnable check -------------------------------------------------
 // Sandbox with a fake export. Proves the guard fires on a missing screenshot
 // and on a missing .json, that a complete trio lands redacted in bob_sessions/,
-// that png+json with NO .md also files (the real case — Bob has never produced
-// an .md on this machine), and that staging is by explicit path. No git, no
-// real files.
+// that png+json with NO .md also files, and that staging is by explicit path.
+// No git, no real files.
 function selfcheck() {
   const user = currentUser();
   const tmp = mkdtempSync(path.join(os.tmpdir(), "bob-ritual-"));
@@ -320,10 +319,16 @@ function selfcheck() {
      `third task did not number itself 03: ${r2.filed.join(" ")}`);
   console.log(`ok  next task auto-numbers: ${TEAM}_task03_parser_fix_summary.png`);
 
-  // 6. THE REAL CASE: .png + .json, no .md at all. Bob has never produced an .md
-  //    on this machine and the saved guide never asks for one. This must FILE,
-  //    not refuse — a refusal here leaves bob_sessions/ empty, and that folder is
-  //    both the graded deliverable and this app's input.
+  // 6. .png + .json, no .md at all. This must FILE, not refuse — a refusal here
+  //    leaves bob_sessions/ empty, and that folder is both the graded deliverable
+  //    and this app's input.
+  //    CORRECTED 2026-09-26: an earlier version of this comment claimed "Bob has
+  //    never produced an .md on this machine". That is now FALSE — Bob 2.1.0 emits
+  //    real markdown exports (both task01 and task02 in bob_sessions/ have one,
+  //    with Bob's own `### User` / `### Assistant` / apply_diff structure). The
+  //    guide asks for the markdown report, not the JSON, so the .md is the graded
+  //    artifact and the .json is OUR input format. .md stays OPTIONAL here as
+  //    belt-and-braces, not as a workaround for a tool that cannot produce one.
   const tmp2 = mkdtempSync(path.join(os.tmpdir(), "bob-ritual-nomd-"));
   const stem3 = "bob-task-facefeed-2026-09-27";
   writeFileSync(path.join(tmp2, stem3 + ".json"), JSON.stringify(fake), "utf8");
