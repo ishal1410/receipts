@@ -1,3 +1,31 @@
+/**
+ * Joins IBM Bob task exports to git history to measure how many lines each Bob
+ * task wrote still survive. For every task in bob_sessions/*.json the module
+ * locates the matching commit (time-window + content authorship), counts the
+ * lines Bob added, and checks how many of those exact lines git-blame still
+ * attributes to that commit at HEAD.
+ *
+ * Exported functions and constants:
+ *   WRITE_TOOLS          - Set of tool names that are considered write operations (display label).
+ *   DEFAULT_WINDOW_MS    - Maximum milliseconds after a task's last update a commit may still belong to it.
+ *   normalisePath        - Converts any Bob path form to a repo-relative forward-slash path.
+ *   loadSessions         - Reads bob_sessions/*.json and returns a deduplicated flat list of tasks.
+ *   classifyTools        - Splits a task's tool calls into confirmed writes and unrecognised-permission entries.
+ *   changedFiles         - Collects every file touched by a task's _meta.changes messages.
+ *   writtenFiles         - Union of classifyTools paths and changedFiles paths for one task.
+ *   bobAddedLines        - Returns a Map of file → Set of lines this task added (from _meta.changes before/after).
+ *   git                  - Thin execFileSync wrapper for running git commands in a repo directory.
+ *   commitLog            - Returns all commits reachable from HEAD, sorted by committer time ascending.
+ *   commitAddedLines     - Returns a Map of file → Set of trimmed lines added by one commit (from git show).
+ *   commitForTask        - Finds the commit matching a task by time-window and content-authorship join.
+ *   addedLines           - Returns a Map of file → added-line count from git show --numstat for one commit.
+ *   survivingLines       - Counts lines in a file at HEAD that git-blame attributes to a given commit sha.
+ *   survivingLineSet     - Returns the Set of trimmed line contents at HEAD that blame to a given sha.
+ *   taskSurvival         - Computes authored/survived line counts for one task across its written files.
+ *   attributeTask        - Runs the full join for one task; every task in yields a result row out.
+ *   assertUniqueCommits  - Throws if any commit sha is claimed by more than one task.
+ *   remediations         - Placeholder rule engine; returns an empty array until Task 9.
+ */
 import { execFileSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
