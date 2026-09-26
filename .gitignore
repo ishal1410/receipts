@@ -1,0 +1,168 @@
+# =============================================================================
+# PASTE SOURCE — this file becomes `.gitignore` in the NEW repo, in Task 0.
+#
+# It is deliberately NOT a live dotfile here: `hackathon-bob/` is not the repo
+# and never will be (Task 0 does `mkdir {name-slug}`), so a stray `.gitignore`
+# in this folder would do nothing except confuse you at H+0.
+#
+#   Task 0, Step 4/4b:  cp ../docs/ready/gitignore.txt .gitignore
+#
+# Composed 2026-09-25 from SCHEDULE.md §4.2, which records the IBM template's
+# contents verbatim (fetched and read 2026-09-24). This is the MERGED result:
+# our own rules first, the template's appended under its own banner, negations
+# last. Do not reorder — see "ORDER IS LOAD-BEARING" at the bottom.
+# =============================================================================
+
+# --- Ours (plan Task 0, Step 4) ----------------------------------------------
+node_modules/
+dist/
+.vercel/
+.DS_Store
+*.local
+.env
+.env.*
+!.env.example
+
+# THE LEADING SLASH IS LOAD-BEARING. Bob writes exports to the WORKSPACE ROOT.
+# A gitignore pattern with no internal slash matches at EVERY directory level,
+# so the unanchored form would also ignore bob_sessions/bob-task-*.json — the
+# eligibility deliverable — and `git add` would report nothing and exit 0.
+# Anchoring to the root forces each export to be MOVED into bob_sessions/
+# deliberately (that is the ritual), while keeping the moved copies trackable.
+/bob-task-*.json
+/bob-task-*.md
+/bob-task-*.png
+
+# THE SCREENSHOT IS IGNORED EVEN AFTER IT IS FILED. This is deliberate and it is
+# the one rule here that blocks a deliverable on purpose.
+# tools/redact.mjs scrubs TEXT. It cannot read PIXELS. A task-summary screenshot
+# can carry an account name, an email, a C:\Users\<you> path, a private branch
+# name, other tasks in the side panel or a desktop notification — and a commit to
+# a public repo is IRREVERSIBLE: a force-push clears neither forks nor IBM's
+# scanner. So ritual.mjs files the .png into bob_sessions/ and does NOT stage it;
+# it prints the exact `git add -f` line to paste once you have actually looked.
+# This pattern is what makes "did not review it" the default outcome instead of
+# "committed it blind".
+#
+# HOW TO ADD ONE (after eyeballing it):
+#   git add -f bob_sessions/<team>_task<NN>_<slug>_summary.png
+#
+# BACKSTOP if you forget: Task 14 Step 1 counts screenshots with `git ls-files`,
+# so an unreviewed shot surfaces as a count mismatch at H+29 while you are awake,
+# not as a leak after submission. Do NOT "fix" that mismatch by deleting this
+# rule — add the reviewed files with -f.
+bob_sessions/*_summary.png
+
+# --- IBM hackathon template safeguards (appended, not replacing the above) ---
+# WATSONX HACKATHON - SECURITY .GITIGNORE
+# NOTE: bob_sessions/ folder is REQUIRED for project submission. Live session
+# files are excluded, but exported reports must be included.
+.copilot/
+.cursor/
+.codeium/
+
+# Environment files
+.env
+.env.*
+!.env.example
+*.env
+env.local
+.env.local
+.env.*.local
+
+# IBM Cloud credentials
+ibmcloud-credentials.json
+ibm-credentials.env
+*-credentials.json
+*apikey*
+*api-key*
+*api_key*
+
+# Config files
+config.json
+config.yaml
+config.yml
+secrets.*
+credentials.*
+
+# Private keys
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+id_rsa
+id_dsa
+*.ppk
+
+# Generic credential patterns
+*credentials*
+*secret*
+*password*
+*token*
+
+# Database
+database.yml
+database.json
+db-config.*
+
+# Node
+node_modules/
+npm-debug.log*
+.npm
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv
+
+# Java
+*.class
+*.jar
+target/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Build
+dist/
+build/
+*.log
+
+# Backups
+*.bak
+*.tmp
+.backup/
+
+# Add project-specific patterns below
+
+# --- Receipts negations: the template's GENERIC substring patterns over-match -
+# ORDER IS LOAD-BEARING: a git negation only works if it comes AFTER the pattern
+# it re-includes. These MUST stay below the template block above.
+
+# COLLISION 1 — `*secret*` would silently un-track a file we already ship.
+# It is a generic substring pattern, so it matches at every directory level.
+!tools/secret-scan.test.mjs
+
+# COLLISION 2 — `*token*` is a live hazard for THIS project specifically:
+# Receipts is *about* token counts. Any file later named tokens.css /
+# context-tokens.md / token-budget.json vanishes from `git add` with exit 0 and
+# no warning. Our design tokens live in src/index.css today and are safe.
+# IF YOU EVER NAME A FILE WITH "token" IN IT, ADD ITS NEGATION IN THE SAME COMMIT.
+
+# Verify before the first push — all five must behave as commented:
+#   git check-ignore -v tools/secret-scan.test.mjs   # prints NOTHING (exit 1)
+#   git check-ignore -v .env                         # prints a match (exit 0)
+#   git check-ignore -v src/index.css                # prints NOTHING (exit 1)
+#   git check-ignore -v bob_sessions/x_summary.png   # prints a match (exit 0)
+#   git check-ignore -v bob_sessions/x_export.json   # prints NOTHING (exit 1)
+#
+# The last two are a PAIR and both matter. If the .json line ever starts printing
+# a match, the screenshot rule has been widened and the app's own input format is
+# now being silently dropped from `git add` with exit 0 and no warning.

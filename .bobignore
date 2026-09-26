@@ -1,0 +1,107 @@
+# =============================================================================
+# PASTE SOURCE — this file becomes `.bobignore` in the NEW repo, in Task 0.
+#
+# Not a live dotfile here for the same reason as gitignore.txt: this folder is
+# not the repo. Task 0 does `mkdir {name-slug}`.
+#
+#   Task 0, Step 4b:  cp ../docs/ready/bobignore.txt .bobignore
+#
+# `.bobignore` controls WHICH FILES BOB CAN READ (guide: "Control which files
+# Bob can access by creating a .bobignore file in your project"). It is not a
+# git file — nothing here affects what is committed.
+#
+# Composed 2026-09-25 from SCHEDULE.md §4.2 (template fetched and read
+# 2026-09-24). Template block verbatim; our negations appended last.
+# =============================================================================
+
+# BOB AI ASSISTANT - SECURITY IGNORE PATTERNS
+# Prevents Bob from logging credentials in session history
+# DO NOT REMOVE OR MODIFY THESE PATTERNS
+
+# IBM Cloud API keys
+*IBM_CLOUD_API_KEY*
+*IBMCLOUD_API_KEY*
+*apikey*
+*api-key*
+*api_key*
+
+# Watson credentials
+*WATSON_*_API_KEY*
+*WATSON_*_URL*
+*ASSISTANT_API_KEY*
+*DISCOVERY_API_KEY*
+
+# Generic credentials
+*API_KEY*
+*ACCESS_TOKEN*
+*SECRET_KEY*
+*PASSWORD*
+*SECRET*
+*secret*
+*CREDENTIAL*
+*PRIVATE_KEY*
+*AUTH_TOKEN*
+*BEARER_TOKEN*
+*api_key*
+*access_token*
+*secret_key*
+*password*
+*credential*
+*private_key*
+*auth_token*
+*bearer_token*
+
+# Environment files
+.env
+.env.*
+*.env
+env.local
+
+# Config files
+*credentials.json
+*secrets.json
+*secrets.yaml
+*config.json
+*config.yaml
+
+# Private keys
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+id_rsa
+id_dsa
+
+# Database
+*DATABASE_URL*
+*DB_PASSWORD*
+*CONNECTION_STRING*
+
+# Session tokens
+*SESSION_SECRET*
+*JWT_SECRET*
+
+# Command outputs
+*ibmcloud iam api-key-create*
+*ibmcloud login*
+*export *API_KEY*
+*echo $*API_KEY*
+*printenv*
+
+# --- Receipts negations -------------------------------------------------------
+# ORDER IS LOAD-BEARING: a negation only re-includes if it comes AFTER the
+# pattern that excluded the file. Keep these below the template block.
+
+# COLLISION 3 — `*config.json` above matches tsconfig.json. That loses no file
+# (this is not git); it means BOB CANNOT READ OUR TYPESCRIPT CONFIG, which at
+# hour 19 looks like Bob being useless about a type error, not like an ignore
+# rule. (vite.config.ts is NOT matched — the pattern ends in .json.)
+!tsconfig.json
+!tsconfig.*.json
+
+# Not a collision, deliberate: the raw root exports are the UNREDACTED session
+# dumps. Bob has no reason to read its own prior transcripts back in.
+/bob-task-*.json
+/bob-task-*.md
