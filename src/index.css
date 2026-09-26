@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+/* FONTS: do NOT use the Google Fonts @import that used to be on this line.
+   Replace it with the 14 self-hosted @font-face blocks — see Step 3b below, which
+   also copies the .woff2 files. Three reasons, in order of how badly they bite:
+   1. A render-blocking third-party @import on the one page a judge opens once, cold.
+   2. It loaded Instrument Sans + JetBrains Mono — the design system the APPROVED
+      12-slide deck replaced with IBM Plex. Shipping it means the app and the deck
+      disagree on typography in front of the judges.
+   3. Those 14 blocks carry font-display:swap. This @import line is why that fix was
+      inert: nothing in this plan ever referenced docs/ready/index.css. */
+
+@theme {
+  /* LIGHT LEDGER. Source of truth is deck/deck.css (APPROVED); docs/ready/index.css
+     is its first derivation and every value here matches it.
+     The dark palette this replaced was Tailwind stock green-400/red-400/amber-400/
+     blue-400. Measured on this ground it was 1.52 / 2.41 / 1.46 / 2.22:1 - every one
+     failing AA by 2-3x, and --color-spend is used AS TEXT at 11px in RemediationCard.
+     There was no tuning path: those are 400-weight steps built for a #0e1116 ground.
+     A judge also opens the deck PDF and this page in the same 3 minutes, and the deck
+     is the artifact already approved and already printed.
+
+     NAMES ARE DELIBERATELY UNCHANGED so no component needs editing. --color-ink now
+     holds the PAPER, which is a misnomer; it stays, because renaming it costs edits
+     across five components for zero pixels. Do not "fix" --color-ink.
+
+     SHAPE RULE, from deck/deck.css:63-66: every rectangular container is radius 0.
+     The pill (999px) is reserved for exactly ONE element. No 10px, no 14px, no
+     rounded-full. NO decorative shadows - panels are separated by a 1px hairline,
+     the way paper on paper is. */
+  --color-ink:        #EEF0EC;   /* page ground  = deck --bg. Paper, not ink. */
+  --color-surface:    #FBFBF9;   /* panel        = deck --surface */
+  --color-raised:     #FFFFFF;   /* tooltips only: one step nearer the viewer */
+  --color-line:       #D8DBD4;   /* hairline     = deck --hairline */
+  --color-line-strong:#C3C7BE;   /* perforation + tooltip edge = deck --hairline-strong */
+  --color-text:       #14171A;   /* = deck --text-1.  15.69:1 on paper */
+  --color-text-2:     #3C413E;   /* = deck --text-2.   9.07:1  prose, table cells */
+  --color-muted:      #5A605C;   /* = deck --text-3.   5.61:1  labels, axes, captions */
+  --color-live:       #136F4A;   /* survived   5.38:1 (was 1.52:1) */
+  --color-dead:       #B23B22;   /* discarded  5.17:1 (was 2.41:1). CORAL, NOT RED:
+                                    red reads as blame, and this product's own
+                                    guardrail is "rework signal, never a quality
+                                    score". deck/deck.css:52-54. Do not "fix" it. */
+  --color-spend:      #7C4E06;   /* coins      6.21:1 - brass, a ledger's money ink */
+  --color-overhead:   #1D4E85;   /* context    7.38:1 - ink-blue */
+  /* IBM Plex, matching the approved deck. Condensed is the display face for headline
+     numbers; the Sans is a variable font covering 400-700 in one file per subset. */
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-display: 'IBM Plex Sans Condensed', var(--font-sans);
+}
+
+html { color-scheme: light; }   /* was dark: on a paper page that paints the
+                                    scrollbars, form controls and the pre-CSS
+                                    flash black. */
+
+body {
+  /* Flat paper. The radial #14202e wash that was here is the most-copied
+     AI-dashboard background of the last two years, and deck/deck.css:72-73 is
+     explicit: "a receipt on a desk, not a card floating on black". */
+  background: var(--color-ink);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  /* letter-spacing removed: -0.011em on 16px body is a SaaS-landing habit. The deck
+     tightens only display type, and tracking is set per role, never globally. */
+}
+
+/* Headings use the Condensed face. WITHOUT THIS RULE --font-display is dead code:
+   it is declared and referenced ZERO times in this plan, so every app heading would
+   render in Plex Sans while every deck heading renders in Condensed - and the deck
+   PDF sits open next to this page while a judge scores it.
+   Condensed ships at 600 and 700 ONLY (no 400, no 500): never put font-medium or
+   font-normal on it or the browser synthesises a weight. */
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.01em; }
+h1 { font-size: 2.125rem; line-height: 1.26; }
+h2 { font-size: 1.1875rem; line-height: 1.25; }
+h3 { font-size: 1rem; line-height: 1.3; }
+
+/* One card treatment, used by every panel. Consistency reads as design. */
+.panel {
+  /* Flat paper and one hairline. The gradient + 14px radius + white inset + 40px
+     black shadow this replaced is the stock elevated-dark-card kit; the inset
+     highlight is a dark-UI device and is invisible on #FBFBF9 anyway. deck/deck.css
+     contains ZERO box-shadow declarations and exactly two radii: 0 and 999px. */
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 0;
+}
+
+/* The perforation: a receipt's tear-off line, and the one place this product borrows
+   its own name. DASHED HERE AND NOWHERE ELSE - no chart gridline, table rule or panel
+   edge may be dashed, so the motif reads as a signature rather than a texture.
+   deck/deck.css:129-137. */
+.perf { border-top: 1px dashed var(--color-line-strong); margin-top: 18px; padding-top: 12px; }
+
+/* Ink focus ring. Task 10 used to specify --color-overhead, which measures 2.22:1 on
+   paper and FAILS WCAG 1.4.11's 3:1 floor for non-text. Ink is 15.69:1 on the page and
+   17.36:1 on a panel - the only ring that reads against both. */
+:focus-visible { outline: 2px solid var(--color-text); outline-offset: 2px; }
+
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+        font-feature-settings: "tnum" 1; }
+/* Headline figures: the deck's big-number recipe, deck/deck.css:181. */
+.num-hero { font-weight: 700; letter-spacing: -0.02em; }
+@font-face{font-family:"IBM Plex Sans Condensed";font-style:normal;font-weight:600;font-display:swap;src:url("./fonts/IBMPlexSansCondensed-600-latin.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:"IBM Plex Sans Condensed";font-style:normal;font-weight:600;font-display:swap;src:url("./fonts/IBMPlexSansCondensed-600-latin-ext.woff2") format("woff2");unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:"IBM Plex Sans Condensed";font-style:normal;font-weight:700;font-display:swap;src:url("./fonts/IBMPlexSansCondensed-700-latin.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:"IBM Plex Sans Condensed";font-style:normal;font-weight:700;font-display:swap;src:url("./fonts/IBMPlexSansCondensed-700-latin-ext.woff2") format("woff2");unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:"IBM Plex Sans";font-style:normal;font-weight:400 700;font-display:swap;src:url("./fonts/IBMPlexSans-latin.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:"IBM Plex Sans";font-style:normal;font-weight:400 700;font-display:swap;src:url("./fonts/IBMPlexSans-latin-ext.woff2") format("woff2");unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:400;font-display:swap;src:url("./fonts/IBMPlexMono-400-latin.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:400;font-display:swap;src:url("./fonts/IBMPlexMono-400-latin-ext.woff2") format("woff2");unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:500;font-display:swap;src:url("./fonts/IBMPlexMono-500-latin.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:500;font-display:swap;src:url("./fonts/IBMPlexMono-500-latin-ext.woff2") format("woff2");unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:600;font-display:swap;src:url("./fonts/IBMPlexMono-600-latin.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:600;font-display:swap;src:url("./fonts/IBMPlexMono-600-latin-ext.woff2") format("woff2");unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:700;font-display:swap;src:url("./fonts/IBMPlexMono-700-latin.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:700;font-display:swap;src:url("./fonts/IBMPlexMono-700-latin-ext.woff2") format("woff2");unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}

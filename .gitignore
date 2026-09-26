@@ -166,3 +166,6 @@ build/
 # The last two are a PAIR and both matter. If the .json line ever starts printing
 # a match, the screenshot rule has been widened and the app's own input format is
 # now being silently dropped from `git add` with exit 0 and no warning.
+
+.vercel
+.env*

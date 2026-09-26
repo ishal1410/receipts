@@ -1,0 +1,38 @@
+{
+  "repo-a": [
+    {
+      "ts": 1789973380,
+      "message": "A: initial calc",
+      "files": {
+        ".gitignore": "bob-task-*.json\nbob-task-*.md\n",
+        "README.md": "# bobtest\nThrowaway workspace for verifying Bob task-history export.\n",
+        "calc.py": "def add(a, b):\n    return a + b\n\ndef divide(a, b):\n    return a / b\n"
+      }
+    },
+    {
+      "ts": 1789973578,
+      "message": "B: docstring on add (by Bob)",
+      "files": {
+        "calc.py": "def add(a, b):\n    \"\"\"Return the sum of a and b.\"\"\"\n    return a + b\n\ndef divide(a, b):\n    return a / b\n"
+      }
+    },
+    {
+      "ts": 1789976203,
+      "message": "C: human rewrites Bob's docstring",
+      "files": {
+        "calc.py": "def add(a, b):\n    \"\"\"Add two numbers and return the result.\"\"\"\n    return a + b\n\ndef divide(a, b):\n    return a / b\n"
+      }
+    }
+  ],
+  "repo-b": [
+    {
+      "ts": 1790032715,
+      "message": "initial: two files",
+      "files": {
+        ".gitignore": "/bob-task-*.json\n/bob-task-*.md\n",
+        "a.py": "def greet(name):\n    return \"hi \" + name\n",
+        "b.py": "def farewell(name):\n    return \"bye \" + name\n"
+      }
+    }
+  ]
+}
