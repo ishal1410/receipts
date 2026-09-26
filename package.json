@@ -10,7 +10,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test \"tools/*.test.mjs\"",
+    "snapshot": "node tools/snapshot.mjs",
+    "check-snapshot": "node tools/check-snapshot-fresh.mjs"
   },
   "dependencies": {
     "motion": "^13.4.4",

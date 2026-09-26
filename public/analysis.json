@@ -1,0 +1,138 @@
+{
+  "generatedAt": "2026-09-26T09:08:32.803Z",
+  "_generatedIn": {
+    "headSha": "b48ebfb3a29ee5cf8a71e26b1c7f4f11bb428214",
+    "commitCount": 7,
+    "isShallowRepo": false
+  },
+  "repo": {
+    "head": "b48ebfb3a29ee5cf8a71e26b1c7f4f11bb428214",
+    "headShort": "b48ebfb",
+    "commitCount": 7
+  },
+  "totals": {
+    "tasks": 2,
+    "coins": 0.895364,
+    "authored": 28,
+    "survived": 28,
+    "contextTokens": 96335,
+    "unattributed": 0
+  },
+  "remediations": [],
+  "tasks": [
+    {
+      "id": "d7cefc76affc0d5a88999ae961f429e8",
+      "title": "Rename tools/_chk.mjs to tools/lib.mjs and tools/_chk.test.mjs to tools/lib.test.mjs. Then fix exactly three lines in tools/lib.test.mjs: line 21 import from './lib.mjs'; line 30 fixtures URL must be './fixtures/' (not '../../tools/fixtures/'); line 296 the filename list must be ['lib.mjs', 'lib.test.mjs']. Change nothing else. Verify with: node --test tools/lib.test.mjs — expect 13 pass, 0 fail.",
+      "status": "active",
+      "taskType": "normal",
+      "createdAt": 1790405440155,
+      "updatedAt": 1790405480532,
+      "coins": 0.468592,
+      "contextTokens": 50636,
+      "wroteFiles": [
+        "tools/lib.test.mjs"
+      ],
+      "commit": {
+        "sha": "4458a40de4218e4b8ac7830e9c5e73b4892c9413",
+        "short": "4458a40",
+        "timeMs": 1790405931000,
+        "shared": false
+      },
+      "authored": 3,
+      "survived": 3,
+      "survivalPct": 1,
+      "fileBreakdown": [
+        {
+          "file": "tools/lib.test.mjs",
+          "authored": 3,
+          "survived": 3
+        }
+      ],
+      "unmatchedFiles": [],
+      "unattributed": null,
+      "unknownTools": [
+        {
+          "name": "execute_command",
+          "reason": "unrecognised permission \"execute\""
+        },
+        {
+          "name": "execute_command",
+          "reason": "unrecognised permission \"execute\""
+        }
+      ],
+      "context": {
+        "total": 29711,
+        "reportedTotal": 50636,
+        "breakdown": {
+          "roleDefinition": 34,
+          "staticSections": 563,
+          "skills": 18572,
+          "baseRules": 197,
+          "projectRules": 0,
+          "customInstructions": 188,
+          "environment": 72,
+          "toolSystemPrompts": 3340,
+          "toolDefinitions": 6745,
+          "mcpToolDefinitions": 0
+        },
+        "loadedSkills": []
+      },
+      "sourceFile": "receipts_task01_lib_rename_export.json"
+    },
+    {
+      "id": "ce27360d5c5f68f50a3d69dae77de05e",
+      "title": "Add a JSDoc file header to tools/lib.mjs: one paragraph saying it joins IBM Bob task exports to git history to measure how many lines each Bob task wrote still survive, then a list of its exported functions with one line each. Do not change any code. Verify with: node --test tools/lib.test.mjs — still 13 pass.",
+      "status": "active",
+      "taskType": "normal",
+      "createdAt": 1790405999525,
+      "updatedAt": 1790406050772,
+      "coins": 0.42677200000000004,
+      "contextTokens": 45699,
+      "wroteFiles": [
+        "tools/lib.mjs"
+      ],
+      "commit": {
+        "sha": "ec9442380ae355db9e21385f79055e08f556ee3a",
+        "short": "ec94423",
+        "timeMs": 1790406167000,
+        "shared": false
+      },
+      "authored": 25,
+      "survived": 25,
+      "survivalPct": 1,
+      "fileBreakdown": [
+        {
+          "file": "tools/lib.mjs",
+          "authored": 25,
+          "survived": 25
+        }
+      ],
+      "unmatchedFiles": [],
+      "unattributed": null,
+      "unknownTools": [
+        {
+          "name": "execute_command",
+          "reason": "unrecognised permission \"execute\""
+        }
+      ],
+      "context": {
+        "total": 29711,
+        "reportedTotal": 45699,
+        "breakdown": {
+          "roleDefinition": 34,
+          "staticSections": 563,
+          "skills": 18572,
+          "baseRules": 197,
+          "projectRules": 0,
+          "customInstructions": 188,
+          "environment": 72,
+          "toolSystemPrompts": 3340,
+          "toolDefinitions": 6745,
+          "mcpToolDefinitions": 0
+        },
+        "loadedSkills": []
+      },
+      "sourceFile": "receipts_task02_lib_jsdoc_export.json"
+    }
+  ]
+}
