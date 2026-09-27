@@ -301,6 +301,59 @@ test('no machine-specific absolute path survives in the shipped join code', () =
   assert.deepEqual(hits, []);
 });
 
+// ------------------------------------------------------- merged corpus (3 repos)
+// snapshot.mjs used to read ONE exports dir joined against ONE repo (bob_sessions/
+// against receipts), so 4 of the 6 real Bob tasks on disk never reached the
+// dashboard - and with them went the only task whose code a human overwrote. A
+// 2-task corpus at 100% survival falsifies the product's own pitch. This test
+// pins the merge: all 6 tasks, all 3 workspaces, and the death that already exists.
+test('the shipped corpus merges all three repos and keeps the dead-code datapoint', (t) => {
+  const CORPUS = fileURLToPath(new URL('../public/analysis.json', import.meta.url));
+  let analysis;
+  try {
+    analysis = JSON.parse(readFileSync(CORPUS, 'utf8'));
+  } catch (e) {
+    t.skip(`public/analysis.json is absent (${e.code ?? e.message}) - it is generated; `
+         + 'run `npm run snapshot` first, then re-run this test.');
+    return;
+  }
+  const tasks = analysis.tasks ?? [];
+
+  assert.equal(tasks.length, 6,
+    `expected the 6 real Bob tasks (2 in bob_sessions/ + 3 in fixtures/repo-a/ + 1 in `
+    + `fixtures/repo-b/), got ${tasks.length}. A short count means snapshot.mjs dropped an `
+    + '(exportsDir, repo) pair.');
+
+  // Every task must say which repo it came from, or the UI cannot tell three repos
+  // apart and the merge is indistinguishable from one big workspace.
+  const missing = tasks.filter((x) => !x.workspace).map((x) => x.id);
+  assert.deepEqual(missing, [], 'tasks with no `workspace` field');
+  const workspaces = new Set(tasks.map((x) => x.workspace));
+  assert.ok(workspaces.size >= 3,
+    `expected tasks from >=3 distinct workspaces, got ${workspaces.size}: `
+    + `[${[...workspaces].join(', ')}]`);
+
+  // THE POINT OF THE MERGE. bobtest commit "C: human rewrites Bob's docstring"
+  // overwrites, in the very next commit, the docstring Bob was paid 0.285058 coins
+  // for and that was approved. That is a real ~0%-survival task. It is measured,
+  // never manufactured - do not "fix" this by editing any repo's history.
+  const dead = tasks.filter((x) => x.survivalPct !== null && x.survivalPct < 0.25);
+  assert.ok(dead.length >= 1,
+    'NO DEAD-CODE DATAPOINT. survivalPct across the corpus is '
+    + `${tasks.map((x) => x.survivalPct).join('/')}, so the dashboard claims 100% survival and `
+    + 'R2 (and with it the loop-close) can never fire. The bobtest task overwritten by commit '
+    + '"C: human rewrites Bob\'s docstring" must be in this corpus.');
+
+  // A task whose code a human overwrote is DISCARDED WORK: it reached a commit and
+  // was measured. A task that never reached any commit is a THROWAWAY SPIKE and is
+  // counted separately, as `unattributed`. Conflating them inflates the loss.
+  for (const d of dead) {
+    assert.ok(d.commit && d.authored > 0,
+      `${d.id} counted as discarded work without a commit it authored lines in`);
+  }
+  assert.equal(analysis.totals.discardedWork, dead.length);
+});
+
 // ------------------------------------------------- loop-close eligibility (§3b)
 // WHY THIS TEST EXISTS, AND WHY IT READS THE SHIPPED CORPUS
 //

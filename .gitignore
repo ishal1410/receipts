@@ -169,3 +169,6 @@ build/
 
 .vercel
 .env*
+
+# internal submission working copy (video script, form paste copy) - not product
+docs/submission/

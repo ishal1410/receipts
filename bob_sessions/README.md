@@ -1,13 +1,13 @@
 # bob_sessions
 
-Every IBM Bob task that built this project, in three forms. **This folder is flat** —
+The IBM Bob tasks that built **this** repo, in three forms. **This folder is flat** —
 there are no `reports/` or `screenshots/` subdirectories.
 
 `tools/ritual.mjs` renames each file into the organiser's convention as it files it:
 
 | file | what it is |
 |---|---|
-| `receipts_task<NN>_<slug>_export.json` | the machine-readable task export. **This is the tool's input** — `tools/snapshot.mjs` reads these and nothing else. |
+| `receipts_task<NN>_<slug>_export.json` | the machine-readable task export. **This is the tool's input.** |
 | `receipts_task<NN>_<slug>_history.md` | Bob's own rendered task report: the prompt, the turns, the tool calls. |
 | `receipts_task<NN>_<slug>_summary.png` | the task-session consumption summary, screenshotted as Bob displayed it. |
 
@@ -26,18 +26,38 @@ git ls-files bob_sessions | grep -c '_history\.md$'
 git ls-files bob_sessions | grep -c '_summary\.png$'
 ```
 
-## Stated plainly, so you do not have to infer it
+## This folder is not the whole corpus
 
-**Bob's authored share of this codebase is small.** Task 01 was a file move plus three
-lines; task 02 was a comment block. The survival join in `tools/lib.mjs`, the snapshot
-pipeline, the React components and the five tools were written before and around those
-two tasks, not by them. The dashboard does not hide this — it publishes Bob's authored
-line count per task, and you can read it off the live page.
+`tools/snapshot.mjs` reads Bob exports from three workspaces: this folder, plus
+`tools/fixtures/repo-a/` (workspace `bobtest`) and `tools/fixtures/repo-b/` (`bobtest2`)
+— 6 tasks in all. Every one is a real redacted Bob export. **`tools/fixtures/` is the
+dataset, not test scaffolding**; the test suite reads it because it is the real data, not
+the other way round.
 
-What Bob **is** structurally, and this is the part that matters: its task export is the
-only input format this product accepts. There is no other parser, no CSV path, no
-generic git-log mode. Point Receipts at anything that is not a Bob export and it has
-nothing to measure.
+Per-task coins, survival and token figures live in `public/analysis.json` and on the live
+page. They are not duplicated here, because they move.
+
+## Bob's work is measured here, including where it was thrown away
+
+**Bob's authored share of this repo is small.** Task 01 was a file move plus three lines;
+task 02 was a comment block. The survival join in `tools/lib.mjs`, the snapshot pipeline,
+the React components and the tools were written before and around those two tasks, not by
+them. The dashboard does not hide this — it publishes Bob's authored line count per task,
+and you can read it off the live page.
+
+The `bobtest` workspace carries the case that matters. Commit `2d6bacb`
+("B: docstring on add (by Bob)") is followed immediately by `8e8b929`
+("C: human rewrites Bob's docstring"). Bob task `d0259633…` was paid **0.285058 coins**,
+its output was approved, and a human overwrote it one commit later. Real discarded work,
+no error raised anywhere.
+
+That is not the same as a task whose output never reached a commit at all. A throwaway
+spike has nothing to join against and reads as unjoined; discarded work landed and was
+then replaced. Receipts reports them separately on purpose.
+
+What Bob **is** structurally: its task export is the only input format this product
+accepts. There is no other parser, no CSV path, no generic git-log mode. Point Receipts
+at anything that is not a Bob export and it has nothing to measure.
 
 ## Why each task is exported one at a time
 

@@ -1,30 +1,214 @@
 {
-  "generatedAt": "2026-09-27T06:15:23.461Z",
+  "generatedAt": "2026-09-27T06:30:22.232Z",
   "_generatedIn": {
-    "headSha": "dd5b281ae132679ce4c09a0232cbe20af6db45bf",
-    "commitCount": 16,
+    "headSha": "16bf0538ba90b515ab43ac823f131687d458c750",
+    "commitCount": 17,
     "isShallowRepo": false
   },
   "repo": {
-    "head": "dd5b281ae132679ce4c09a0232cbe20af6db45bf",
-    "headShort": "dd5b281",
-    "commitCount": 16
+    "head": "16bf0538ba90b515ab43ac823f131687d458c750",
+    "headShort": "16bf053",
+    "commitCount": 17
   },
+  "workspaces": [
+    "bobtest",
+    "bobtest2",
+    "receipts"
+  ],
+  "skippedPairs": [],
   "totals": {
-    "tasks": 2,
-    "coins": 0.895364,
-    "authored": 28,
+    "tasks": 6,
+    "coins": 1.894928,
+    "authored": 29,
     "survived": 28,
-    "contextTokens": 96335,
-    "unattributed": 0
+    "contextTokens": 240259,
+    "unattributed": 3,
+    "discardedWork": 1,
+    "discardedCoins": 0.285058
   },
   "remediations": [],
   "tasks": [
+    {
+      "id": "d0259633f134c3db6bfd3e596a142240",
+      "title": "add a docstring to the add function in calc.py",
+      "status": "active",
+      "taskType": "normal",
+      "workspace": "bobtest",
+      "createdAt": 1789973446807,
+      "updatedAt": 1789973467488,
+      "coins": 0.285058,
+      "contextTokens": 35905,
+      "wroteFiles": [
+        "calc.py"
+      ],
+      "commit": {
+        "sha": "2d6bacb6af92a3303865111b8770dc93d6aa2a1a",
+        "short": "2d6bacb",
+        "timeMs": 1789973578000,
+        "shared": false
+      },
+      "authored": 1,
+      "survived": 0,
+      "survivalPct": 0,
+      "fileBreakdown": [
+        {
+          "file": "calc.py",
+          "authored": 1,
+          "survived": 0
+        }
+      ],
+      "unmatchedFiles": [],
+      "unattributed": null,
+      "unknownTools": [],
+      "context": {
+        "total": 29977,
+        "reportedTotal": 35905,
+        "breakdown": {
+          "roleDefinition": 34,
+          "staticSections": 563,
+          "skills": 19009,
+          "baseRules": 197,
+          "projectRules": 0,
+          "customInstructions": 188,
+          "environment": 67,
+          "toolSystemPrompts": 3340,
+          "toolDefinitions": 6579,
+          "mcpToolDefinitions": 0
+        },
+        "loadedSkills": []
+      },
+      "sourceFile": "bob-task-d0259633f134c3db6bfd3e596a142240-2026-09-21.json"
+    },
+    {
+      "id": "da0e0ddc846552e909820468bd001c25",
+      "title": "add a guard against division by zero in the divide function in calc.py",
+      "status": "active",
+      "taskType": "normal",
+      "workspace": "bobtest",
+      "createdAt": 1789973615073,
+      "updatedAt": 1789973755633,
+      "coins": 0.213544,
+      "contextTokens": 35835,
+      "wroteFiles": [
+        "calc.py"
+      ],
+      "commit": null,
+      "authored": 0,
+      "survived": 0,
+      "survivalPct": null,
+      "fileBreakdown": [],
+      "unmatchedFiles": [
+        "calc.py"
+      ],
+      "unattributed": "no-matching-commit",
+      "unknownTools": [],
+      "context": {
+        "total": 29977,
+        "reportedTotal": 35835,
+        "breakdown": {
+          "roleDefinition": 34,
+          "staticSections": 563,
+          "skills": 19009,
+          "baseRules": 197,
+          "projectRules": 0,
+          "customInstructions": 188,
+          "environment": 67,
+          "toolSystemPrompts": 3340,
+          "toolDefinitions": 6579,
+          "mcpToolDefinitions": 0
+        },
+        "loadedSkills": []
+      },
+      "sourceFile": "bob-task-da0e0ddc846552e909820468bd001c25-2026-09-21.json"
+    },
+    {
+      "id": "1f84e13cb3298627e05d9f9b496c19ac",
+      "title": "add a docstring to greet in a.py and a docstring to farewell in b.py",
+      "status": "active",
+      "taskType": "normal",
+      "workspace": "bobtest",
+      "createdAt": 1790035225786,
+      "updatedAt": 1790035235331,
+      "coins": 0.14202399999999998,
+      "contextTokens": 35580,
+      "wroteFiles": [],
+      "commit": null,
+      "authored": 0,
+      "survived": 0,
+      "survivalPct": null,
+      "fileBreakdown": [],
+      "unmatchedFiles": [],
+      "unattributed": "no-files-written",
+      "unknownTools": [],
+      "context": {
+        "total": 29977,
+        "reportedTotal": 35580,
+        "breakdown": {
+          "roleDefinition": 34,
+          "staticSections": 563,
+          "skills": 19009,
+          "baseRules": 197,
+          "projectRules": 0,
+          "customInstructions": 188,
+          "environment": 67,
+          "toolSystemPrompts": 3340,
+          "toolDefinitions": 6579,
+          "mcpToolDefinitions": 0
+        },
+        "loadedSkills": []
+      },
+      "sourceFile": "bob-task-1f84e13cb3298627e05d9f9b496c19ac-2026-09-22.json"
+    },
+    {
+      "id": "ef4ccef5e1ddbcbd4e2f070a27b7e629",
+      "title": "add a docstring to greet in a.py and a docstring to farewell in b.py",
+      "status": "active",
+      "taskType": "normal",
+      "workspace": "bobtest2",
+      "createdAt": 1790035435013,
+      "updatedAt": 1790035462914,
+      "coins": 0.35893800000000003,
+      "contextTokens": 36604,
+      "wroteFiles": [
+        "a.py",
+        "b.py"
+      ],
+      "commit": null,
+      "authored": 0,
+      "survived": 0,
+      "survivalPct": null,
+      "fileBreakdown": [],
+      "unmatchedFiles": [
+        "a.py",
+        "b.py"
+      ],
+      "unattributed": "no-matching-commit",
+      "unknownTools": [],
+      "context": {
+        "total": 29993,
+        "reportedTotal": 36604,
+        "breakdown": {
+          "roleDefinition": 34,
+          "staticSections": 563,
+          "skills": 19009,
+          "baseRules": 197,
+          "projectRules": 0,
+          "customInstructions": 188,
+          "environment": 68,
+          "toolSystemPrompts": 3340,
+          "toolDefinitions": 6594,
+          "mcpToolDefinitions": 0
+        },
+        "loadedSkills": []
+      },
+      "sourceFile": "bob-task-ef4ccef5e1ddbcbd4e2f070a27b7e629-2026-09-22.json"
+    },
     {
       "id": "d7cefc76affc0d5a88999ae961f429e8",
       "title": "Rename tools/_chk.mjs to tools/lib.mjs and tools/_chk.test.mjs to tools/lib.test.mjs. Then fix exactly three lines in tools/lib.test.mjs: line 21 import from './lib.mjs'; line 30 fixtures URL must be './fixtures/' (not '../../tools/fixtures/'); line 296 the filename list must be ['lib.mjs', 'lib.test.mjs']. Change nothing else. Verify with: node --test tools/lib.test.mjs — expect 13 pass, 0 fail.",
       "status": "active",
       "taskType": "normal",
+      "workspace": "receipts",
       "createdAt": 1790405440155,
       "updatedAt": 1790405480532,
       "coins": 0.468592,
@@ -84,6 +268,7 @@
       "title": "Add a JSDoc file header to tools/lib.mjs: one paragraph saying it joins IBM Bob task exports to git history to measure how many lines each Bob task wrote still survive, then a list of its exported functions with one line each. Do not change any code. Verify with: node --test tools/lib.test.mjs — still 13 pass.",
       "status": "active",
       "taskType": "normal",
+      "workspace": "receipts",
       "createdAt": 1790405999525,
       "updatedAt": 1790406050772,
       "coins": 0.42677200000000004,
