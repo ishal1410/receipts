@@ -41,9 +41,26 @@ export function repoLabel(t: Task): string | null {
   return last ? decodeURIComponent(last) : null;
 }
 
+// WAS WRONG UNTIL THE RULE ENGINE LANDED. This declared `severity: number` and
+// `evidence: string[]`; the objects tools/lib.mjs actually writes have neither, and
+// carry six fields this did not name. Nothing caught it because the only consumer
+// read `.length` off the array, so TypeScript was never asked about a member. Now
+// that the fields are rendered, the shape has to be the real one.
+//
+// Read off public/analysis.json, 12 fields:
 export type Remediation = {
-  id: string; severity: number; title: string; detail: string;
-  action: string; evidence: string[];
+  id: string;          // "R2-d0259633": rule id joined to the task's short id
+  rule: string;        // "R2"
+  taskId: string;
+  workspace: string;
+  file: string;        // workspace-prefixed, e.g. "bobtest/calc.py"
+  coins: number;
+  authored: number;
+  survived: number;
+  title: string;       // written to be read first, one line
+  detail: string;      // the evidence, naming the commit that owns the code now
+  action: string;      // the one-line fix
+  prompt: string;      // the multi-sentence text an operator pastes into Bob
 };
 
 export type Analysis = {

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { MotionConfig } from 'motion/react';
 import type { Analysis } from './types';
 import Finding from './components/Finding';
+import Provenance from './components/Provenance';
+import Remediations from './components/Remediations';
 import Summary from './components/Summary';
 import TaskTable from './components/TaskTable';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -89,23 +91,23 @@ export default function App() {
     // silences the pill and the row hover but NOT these panel entrances.
     <MotionConfig reducedMotion="user">
     <div className="min-h-dvh px-4 py-10 sm:px-6 md:px-10">
-      <header className="mx-auto flex max-w-6xl flex-wrap items-end justify-between gap-x-8 gap-y-3">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--color-muted)]">
-            IBM Bob session forensics
-          </p>
-          <h1 className="mt-2">Receipts</h1>
-          <p className="mt-2 max-w-md text-sm text-[var(--color-muted)]">
-            What the agent spent, what it spent it on, and whether the code it wrote is
-            still here.
-          </p>
-        </div>
-        {s.k === 'ready' && (
-          <p className="text-xs text-[var(--color-muted)]">
-            One snapshot of{' '}
-            <span className="num">{s.data.repo.headShort}</span>
-          </p>
-        )}
+      {/* ORIENTATION. A judge opens this URL cold and gives it a few seconds. The
+          subtitle this replaced ("what the agent spent, what it spent it on...")
+          described the columns of a report to someone who had not yet been told what
+          the report was of. Three elements only: what field this is, what it is
+          called, and the one sentence that makes the rest worth reading. The
+          "one snapshot of <sha>" line that used to sit on the right is gone rather
+          than reworded - the footer already says it, in full, with the commit count
+          and the timestamp. */}
+      <header className="mx-auto max-w-6xl">
+        <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--color-muted)]">
+          IBM Bob session forensics
+        </p>
+        <h1 className="mt-2">Receipts</h1>
+        <p className="mt-3 max-w-xl text-lg leading-snug text-[var(--color-text-2)]">
+          Bob prices every task and itemises every token, then closes the session.
+          This page reads that back.
+        </p>
       </header>
 
       {/* ErrorBoundary wraps <main> only: the header and footer are static text and
@@ -136,9 +138,17 @@ export default function App() {
         )}
         {s.k === 'ready' && (
           <>
+            {/* Provenance leads. The Finding is the loudest number on the page and
+                it is worth nothing to a reader who has no reason to believe
+                analysis.json was not hand-written; the chain that answers that also
+                happens to be the only place the operator's workflow is visible. */}
+            <Provenance analysis={s.data} />
             <Finding analysis={s.data} />
             <TaskTable tasks={s.data.tasks} />
             <Summary analysis={s.data} />
+            {/* Last, under the total: the one panel on this page that asks the
+                reader to do something rather than to know something. */}
+            <Remediations analysis={s.data} />
           </>
         )}
       </main>

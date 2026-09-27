@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "test": "node --test \"tools/*.test.mjs\"",
     "snapshot": "node tools/snapshot.mjs",
+    "replay": "node tools/replay.mjs",
     "check-snapshot": "node tools/check-snapshot-fresh.mjs"
   },
   "dependencies": {

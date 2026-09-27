@@ -21,10 +21,24 @@ there are no `reports/` or `screenshots/` subdirectories.
 Two tasks, six files, all three counts equal. Verify it yourself:
 
 ```bash
-git ls-files bob_sessions | grep -c '_export\.json$'
-git ls-files bob_sessions | grep -c '_history\.md$'
-git ls-files bob_sessions | grep -c '_summary\.png$'
+git ls-files bob_sessions | grep -c '_export\.json$'   # 2
+git ls-files bob_sessions | grep -c '_history\.md$'    # 2
+git ls-files bob_sessions | grep -c '_summary\.png$'   # 2
 ```
+
+Then read the evidence rather than the count. `_history.md` is Bob's own rendering
+of the task — the prompt as given, each turn, each tool call — and the `_export.json`
+beside it is the same task as machine data. Both tasks reached this repo's history,
+and the commits name them:
+
+```bash
+git log --oneline --grep='by Bob'   # ec94423 task02, 4458a40 task01
+git show ec94423                    # the JSDoc header Bob wrote, as it landed
+```
+
+The repo README's **Verify it yourself** section carries the rest: the context-window
+figures, the discarded-work row, the freshness gate on `public/analysis.json`, and
+`node tools/replay.mjs`, which re-derives the discarded-work verdict from scratch.
 
 ## This folder is not the whole corpus
 
@@ -51,6 +65,14 @@ The `bobtest` workspace carries the case that matters. Commit `2d6bacb`
 its output was approved, and a human overwrote it one commit later. Real discarded work,
 no error raised anywhere.
 
+That workspace's git history is a local checkout and is **not** part of this repo, so
+`tools/fixtures/history.json` carries the data to rebuild it. `node tools/replay.mjs`
+does the rebuild in a temp directory, re-runs the join, and diffs the result against
+committed `public/analysis.json` — exiting non-zero on any disagreement. The rebuilt
+commit SHAs differ on purpose (a neutral fixture author replaces a Windows username
+that must not be published); the verdict is what reproduces, and the command prints
+each rebuilt sha beside the one the dashboard cites.
+
 That is not the same as a task whose output never reached a commit at all. A throwaway
 spike has nothing to join against and reads as unjoined; discarded work landed and was
 then replaced. Receipts reports them separately on purpose.
@@ -68,7 +90,11 @@ its own — Receipts' task→commit join is time-ordered, and batched commits co
 
 ## A note on the screenshots
 
-`tools/redact.mjs` scrubs text. It cannot read pixels. Each `.png` was therefore reviewed
-by eye before it was added with `git add -f` — `.gitignore` deliberately ignores
-`bob_sessions/*_summary.png` so that the default outcome is "not yet reviewed" rather
-than "committed blind". A commit to a public repo cannot be taken back.
+`tools/redact.mjs` scrubs text. It cannot read pixels, so every `.png` must be reviewed
+by eye before it ships. `.gitignore` ignores `bob_sessions/*_summary.png` so that the
+default outcome is "not yet reviewed" rather than "committed blind", and adding one takes
+a deliberate `git add -f`.
+
+The copies under `public/bob_sessions/` are the exception: the page renders them, so they
+must be committed for the deployed site to show them, and that `.gitignore` guard does not
+cover them. A commit to a public repo cannot be taken back.

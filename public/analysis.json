@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-09-27T06:38:30.554Z",
+  "generatedAt": "2026-09-27T07:36:13.858Z",
   "_generatedIn": {
-    "headSha": "bab5d9ac666d9c17d75ff816f2b26aaee6b134ea",
-    "commitCount": 18,
+    "headSha": "b5def2ce65713d87298da34901f3d27b55207830",
+    "commitCount": 19,
     "isShallowRepo": false
   },
   "repo": {
-    "head": "bab5d9ac666d9c17d75ff816f2b26aaee6b134ea",
-    "headShort": "bab5d9a",
-    "commitCount": 18
+    "head": "b5def2ce65713d87298da34901f3d27b55207830",
+    "headShort": "b5def2c",
+    "commitCount": 19
   },
   "workspaces": [
     "bobtest",
@@ -26,7 +26,22 @@
     "discardedWork": 1,
     "discardedCoins": 0.285058
   },
-  "remediations": [],
+  "remediations": [
+    {
+      "id": "R2-d0259633",
+      "rule": "R2",
+      "taskId": "d0259633f134c3db6bfd3e596a142240",
+      "workspace": "bobtest",
+      "file": "bobtest/calc.py",
+      "coins": 0.285058,
+      "authored": 1,
+      "survived": 0,
+      "title": "0.285058 Bobcoins bought 1 line of bobtest/calc.py that is gone",
+      "detail": "Commit 2d6bacb added 1 line to bobtest/calc.py for this task; git blame at HEAD attributes 0 of them to it. Commit 8e8b929 (\"C: human rewrites Bob's docstring\") owns that code now.",
+      "action": "Re-add 1 line task d0259633 wrote to bobtest/calc.py, or add a test asserting they are intentionally absent.",
+      "prompt": "In bobtest/calc.py, the line you wrote in commit 2d6bacb was replaced by 8e8b929 (\"C: human rewrites Bob's docstring\"). Read the file as it stands at HEAD and decide which version is right. If the current one is better, leave it alone and add a short test or comment recording that the earlier version was dropped on purpose. If something was lost, put it back without undoing the rest of 8e8b929. Reply with what you changed and why."
+    }
+  ],
   "tasks": [
     {
       "id": "d0259633f134c3db6bfd3e596a142240",
@@ -46,6 +61,11 @@
         "short": "2d6bacb",
         "timeMs": 1789973578000,
         "shared": false
+      },
+      "overwrittenBy": {
+        "sha": "8e8b929bfa6965b928098b9965de054be8b0a299",
+        "short": "8e8b929",
+        "subject": "C: human rewrites Bob's docstring"
       },
       "authored": 1,
       "survived": 0,
@@ -93,6 +113,7 @@
         "calc.py"
       ],
       "commit": null,
+      "overwrittenBy": null,
       "authored": 0,
       "survived": 0,
       "survivalPct": null,
@@ -133,6 +154,7 @@
       "contextTokens": 35580,
       "wroteFiles": [],
       "commit": null,
+      "overwrittenBy": null,
       "authored": 0,
       "survived": 0,
       "survivalPct": null,
@@ -174,6 +196,7 @@
         "b.py"
       ],
       "commit": null,
+      "overwrittenBy": null,
       "authored": 0,
       "survived": 0,
       "survivalPct": null,
@@ -222,6 +245,7 @@
         "timeMs": 1790405931000,
         "shared": false
       },
+      "overwrittenBy": null,
       "authored": 3,
       "survived": 3,
       "survivalPct": 1,
@@ -282,6 +306,7 @@
         "timeMs": 1790406167000,
         "shared": false
       },
+      "overwrittenBy": null,
       "authored": 25,
       "survived": 25,
       "survivalPct": 1,

@@ -10,20 +10,72 @@ Two things become visible once you read it. First, where the context budget actu
 
 ## What it shows
 
-Four panels over one dataset:
+One dataset, in page order:
 
-- **Task table** — every Bob task in the corpus, its cost in Bobcoins, and a survival verdict for the code it wrote.
-- **Survival chart** — cost plotted against survival, so an expensive task that did not stick is visible at a glance.
-- **Context panel** — where each task's context went, by category (skills, tool definitions, project rules, the rest).
-- **Remediation card** — one deterministic action per low-survival task, from a fixed four-rule engine. No LLM call.
+- **Provenance** — the same figures in three artifacts side by side: Bob's own IDE consumption screenshot, the committed export, and the numbers read back out of `analysis.json` at runtime.
+- **The context finding** — where each task's window went before the prompt arrived, by category (skills, tool definitions, project rules, the rest).
+- **The task table** — every Bob task in the corpus, its cost in Bobcoins, and a survival verdict for the code it wrote.
+- **The totals** — coins spent, lines authored, lines still at HEAD, tasks that never joined a commit.
+- **Remediations** — the discarded-work row turned into a prompt an operator can paste into Bob. Nothing on this page has been run, pasted or sent. Receipts emits the text; a human decides.
 
 Corpus: 6 Bob tasks across 3 workspaces — 2 in this repo's `bob_sessions/`, 3 in `tools/fixtures/repo-a/` (workspace `bobtest`), 1 in `tools/fixtures/repo-b/` (`bobtest2`). All six are real redacted Bob exports, not synthetic scaffolding: `tools/fixtures/` is the dataset, and the repo's own test suite happens to run against it too. Live figures — coins, survival, token counts — come from `public/analysis.json`, which is where you should read them rather than from this file.
 
+## Verify it yourself
+
+Five checks, from a clone, with nothing but Node 24, git and `curl`. None of them needs `npm install`. The first four re-read what is in the repo; the fifth re-derives a verdict from scratch, and it is the one to run if you only run one.
+
+**1. IBM Bob really built part of this repo.** `bob_sessions/` holds, per task, the machine-readable export, Bob's own rendered task report (prompt, turns, tool calls), and a screenshot of the Bob IDE's consumption summary. Both tasks are in this repo's git history:
+
+```bash
+ls bob_sessions/
+git log --oneline --grep='by Bob'   # ec94423 task02, 4458a40 task01
+git show ec94423                    # the JSDoc header Bob wrote, as it landed
+```
+
+**2. Two thirds of the context window is a skills catalog the operator never asked for.** One command, all six exports:
+
+```bash
+node -e "for(const f of process.argv.slice(1)){const{tasks}=require('./'+f);for(const w of tasks){const c=(w.task||w).costs.contextWindowBreakdown;console.log(f,c.breakdown.skills+'/'+c.total,(100*c.breakdown.skills/c.total).toFixed(1)+'%','loadedSkills='+JSON.stringify(c.loadedSkills),'key='+c.key.split('|').pop())}}" bob_sessions/*_export.json tools/fixtures/repo-*/*.json
+```
+
+Six lines out, one per task. `loadedSkills=[]` and `key=5381` every time — 5381 is the djb2 hash of the empty string, so the catalog was injected and nothing was ever loaded from it. The skills share runs 62.5% to 63.4%: 18,572 tokens of a 29,711-token window in this repo, 19,009 of 29,977 in the sibling workspaces. It is not byte-identical across tasks, which is what a measurement looks like rather than a number someone typed.
+
+**3. A human threw away work Bob was paid for.**
+
+```bash
+node -e "for(const t of require('./public/analysis.json').tasks)console.log(t.id.slice(0,8),t.workspace,t.coins,'authored='+t.authored,'survived='+t.survived,'commit='+(t.commit?t.commit.short:'none'))"
+grep -o 'Return the sum of a and b' tools/fixtures/repo-a/*d0259633*.json
+```
+
+Task `d0259633` cost 0.285058 coins, wrote 1 line, joined commit `2d6bacb`, and 0 of that line survives. The second command prints the docstring it wrote, straight out of the `apply_diff` tool call in the export.
+
+Both commands read committed files. Check 5 re-derives the same verdict without trusting either.
+
+**4. The dashboard is generated, not hand-written.** Add up `costs.cost` across the six raw exports and compare it with the headline total the page renders:
+
+```bash
+node -e "let s=0;for(const f of process.argv.slice(1))for(const w of require('./'+f).tasks)s+=(w.task||w).costs.cost;console.log('sum of costs.cost in the exports:',s.toFixed(6),'| analysis.json totals.coins:',require('./public/analysis.json').totals.coins)" bob_sessions/*_export.json tools/fixtures/repo-*/*.json
+curl -s https://receipts-black-five.vercel.app/analysis.json | diff - public/analysis.json
+```
+
+Both sides print `1.894928` — the headline total is summed out of the raw exports, not typed into a file. The second command compares the deployed file against the committed one: they are the same artifact, so an empty `diff` means the live page is serving exactly what you can read here, and a non-empty one means a deploy is lagging a commit, which is worth knowing before you quote a figure off the page. `public/analysis.json` also carries its own provenance — `generatedAt`, and a `_generatedIn` block with the head SHA, commit count and shallow-clone flag of the repo it was built from. `npm run check-snapshot` is the gate that reads that block and refuses a snapshot older than its inputs or built from a shallow clone.
+
+**5. The discarded-work verdict reproduces from scratch.** The `bobtest` and `bobtest2` git histories are local checkouts, not part of this repo — so `tools/fixtures/history.json` carries the data to rebuild them, and `tools/replay.mjs` does:
+
+```bash
+node tools/replay.mjs   # or: npm run replay
+```
+
+It builds both sibling workspaces in a temp directory from that checked-in data — no repo outside the clone, no network, Node stdlib only, so it runs before `npm ci` and cleans up after itself — then re-runs the dashboard's own join over them, re-derives the R2 remediation, and diffs the result against committed `public/analysis.json`, exiting non-zero on any disagreement. It currently exits 0: *the rebuild AGREES with public/analysis.json on all 4 fixture-backed task(s) — lines authored, lines surviving at HEAD, survival %, and which commit overwrote the work.*
+
+Two limits, which the command prints for itself:
+
+- **The SHAs differ, deliberately.** A sha hashes content plus author plus time, and the real commits are authored under a Windows username that must not be published, so the replay commits under a neutral fixture author. Contents, messages and committer timestamps are identical. What reproduces is the *verdict*, not the hash; each row prints its rebuilt sha beside the one the dashboard cites.
+- **It attests to 4 of the 6 tasks.** The two `receipts` tasks are excluded because they join against this repo's own history, which you already have — checks 1 and 3 cover those.
+
 ## Where a human threw Bob's work away
 
-In the `bobtest` workspace, commit `2d6bacb` ("B: docstring on add (by Bob)") is followed immediately by `8e8b929` ("C: human rewrites Bob's docstring"). Bob task `d0259633…` was paid **0.285058 coins**, its output was approved, and a human overwrote it one commit later. Nothing failed. No error was raised anywhere. The coins were spent, the work landed, and it was gone by the next commit.
-
-This is the single most useful row in the dataset, and it is why the survival column exists.
+In the `bobtest` workspace, commit `2d6bacb` ("B: docstring on add (by Bob)") is followed immediately by `8e8b929` ("C: human rewrites Bob's docstring"). Bob task `d0259633…` was paid **0.285058 coins**, its output was approved, and a human overwrote it one commit later. Nothing failed and no error was raised anywhere: the coins were spent, the work landed, and it was gone by the next commit. That one row is why the survival column exists, and it is the only remediation the engine emits on this corpus.
 
 It is a different failure from a task that never reached a commit at all. A throwaway spike — Bob asked to try something, output never committed — has no commit to join against and shows as unjoined. Discarded work *did* land and *was* then replaced. Receipts keeps the two apart; conflating them would let "we never meant to keep it" absorb "a human rejected it after paying for it."
 
@@ -37,11 +89,11 @@ breakdown.skills = tokens(systemPrompt.skills) + sum(loadedSkills)
 
 The first term is the whole skills *catalog*, injected into the system prompt every task. The second is the skills the agent actually loaded. In all 6 exports, `loadedSkills` is an empty array — so every skill token counted is catalog, none of it is a skill the agent chose.
 
-That is confirmed independently in the same exports: `costs.contextWindowBreakdown.key` ends in `|5381` in all six. 5381 is the djb2 hash of the empty string — the fingerprint of "no skill was ever loaded." Anyone holding the file can reproduce it.
+The same exports confirm it a second way, independent of the formula: `costs.contextWindowBreakdown.key` ends in `|5381` in all six, and 5381 is the djb2 hash of the empty string. **Verify it yourself**, claim 2, prints both checks in one command.
 
 Measured across the corpus: **451,846 tokens of skill definitions resent across 24 turns / 6 tasks, with `loadedSkills` empty every time.**
 
-Injecting the catalog up front is a design decision, not a bug — an agent cannot pick a skill it has not been shown. The point is not that the tokens are wasted. The point is that Bob measures this to the token and then discards the measurement. Receipts is the panel that reads it.
+Injecting the catalog up front is a design decision, not a bug — an agent cannot pick a skill it has not been shown. The point is not that the tokens are wasted. The point is that Bob measures this to the token, then discards the measurement when the task closes.
 
 ## How the survival join works
 
@@ -59,16 +111,9 @@ Each workspace joins against its own git history. A task is never matched to a c
 
 ## IBM Bob as a core component
 
-Bob is the only input. Receipts accepts nothing else — no arbitrary JSON upload, no manual entry. Take Bob out and the product has zero inputs. The loop is human-in-the-loop in both directions: Bob exports on your command, Receipts measures and emits a remediation prompt, you paste it into Bob, and the next export re-measures.
+Bob is the only input. Receipts accepts nothing else — no arbitrary JSON upload, no manual entry. Take Bob out and the product has zero inputs. Export is manual and on your command; Receipts reads what the export already contains and adds nothing of its own.
 
-Bob also built part of this repo, and `bob_sessions/` is the evidence — two complete trios (export JSON, history markdown, consumption-summary screenshot):
-
-```
-bob_sessions/receipts_task01_lib_rename_{export.json,history.md,summary.png}
-bob_sessions/receipts_task02_lib_jsdoc_{export.json,history.md,summary.png}
-```
-
-What Bob did here, factually: task 01 moved `tools/_chk.mjs` to `tools/lib.mjs` (and its test alongside) and fixed three lines in the test file. Task 02 wrote the JSDoc file header on `tools/lib.mjs`. That is 28 lines across two files. The rest of this repo is hand-written; Receipts does not claim otherwise, and the dashboard publishes the per-task authored line count either way.
+Bob also built part of this repo, and `bob_sessions/` is the evidence: two complete trios of export JSON, history markdown and consumption-summary screenshot, one per task. What Bob did here, factually: task 01 moved `tools/_chk.mjs` to `tools/lib.mjs` (and its test alongside) and fixed three lines in the test file. Task 02 wrote the JSDoc file header on `tools/lib.mjs`. That is 28 lines across two files. The rest of this repo is hand-written; Receipts does not claim otherwise, and the dashboard publishes the per-task authored line count either way.
 
 That is the whole claim about Bob's authorship, and it is deliberately unflattering. The interesting thing is not how much Bob wrote — it is that across 6 tasks in 3 repos its work is instrumented and measured here, including the one case where a human threw it away.
 
@@ -76,12 +121,12 @@ That is the whole claim about Bob's authorship, and it is deliberately unflatter
 
 ```bash
 npm ci
-npm test
-npm run snapshot
-npm run dev
+npm run dev     # serves the committed public/analysis.json
 ```
 
-Other scripts: `npm run build`, `npm run lint`, `npm run check-snapshot`.
+Other scripts: `npm run build`, `npm run lint`, `npm test`, `npm run replay`, `npm run check-snapshot`.
+
+**`npm run snapshot` on a fresh clone will shrink the corpus.** The pipeline joins each workspace's exports against that workspace's own git history, and two of the three checkouts exist only on the author's machine. On your clone it skips those pairs — loudly, one `SKIPPED …` line each — and rewrites `public/analysis.json` down to the 2 tasks it can still join. That is the correct behaviour, and it is why the file is committed rather than built at deploy time. `git checkout public/analysis.json` restores the 6-task corpus.
 
 ## Architecture
 
@@ -91,7 +136,7 @@ Other scripts: `npm run build`, `npm run lint`, `npm run check-snapshot`.
 
 Symptom first.
 
-**`npm test` fails.** The suite is expected green; a red run is a real regression, so read which test failed. One test is a canary over the corpus: it asserts the remediation engine can emit a file-edit candidate, which requires at least one genuinely low-survival task in the dataset. It fails if the corpus loses its discarded-work exemplar (the `d0259633…` / `8e8b929` case) or if the remediation rules stop matching it — i.e. it fails when the dataset or the engine changed, not when the build is broken.
+**`npm test` fails.** As shipped: 84 pass, 0 fail. A red run is a real regression, so read which test failed. One of them is a canary over the shipped corpus rather than over fixtures: `the remediation engine emits at least one FILE-EDIT candidate for the loop-close` in `tools/lib.test.mjs` asserts that `remediations()` can turn `public/analysis.json` into a prompt naming a real file. It goes red if the corpus loses its discarded-work exemplar or if R2 stops matching it — that is a dataset or engine change, not a broken build, and its assertion message says which.
 
 **The page says "Could not load analysis.json".** `public/analysis.json` is not in the deployed build. It is a committed artifact, not a build step — Vercel clones shallow, so generating it there would produce different, plausible, wrong numbers with no error.
 
@@ -119,7 +164,8 @@ git fetch --unshallow                   # if it printed true
 
 - **Not a backend.** `public/analysis.json` is a static file; there is nothing else to run. No database, no auth.
 - **Not an API integration.** Export and paste are manual by design.
-- **Not LLM-powered.** The remediation card is a fixed four-rule engine — reproducible and free, not a placeholder for something smarter.
+- **Not LLM-powered.** Every number, and the remediation prompt itself, comes from the exports and git; there is no model call anywhere in the pipeline. One rule is implemented — R2, "Bob was paid for lines a human overwrote" — not the four the spec sketches, because R2 is the only one whose fix is a diff Bob can produce; the rest are IDE settings and process advice. It emits exactly one remediation on this corpus, for task `d0259633`.
+- **Not an automated loop.** Receipts writes a prompt. It does not send it, run it, or check whether anyone acted on it. The next export is what re-measures, and exporting is your keystroke.
 - **Not a performance metric.** A rename tanks a good task's score and a deliberate throwaway spike tanks it further, and neither means anyone did anything wrong. The number is a prompt to go look at a diff, not a verdict.
 - **Not an indictment of Bob.** The skills-catalog injection is by design and the discarded docstring was a human's call. Receipts reports what Bob already measured; it does not claim anyone erred.
 - **Not a large corpus.** 6 tasks, 3 repos, one person. The join logic is tested against real data; the dataset is not big enough to claim it generalizes.

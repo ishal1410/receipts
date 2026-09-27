@@ -24,7 +24,10 @@
  *   taskSurvival         - Computes authored/survived line counts for one task across its written files.
  *   attributeTask        - Runs the full join for one task; every task in yields a result row out.
  *   assertUniqueCommits  - Throws if any commit sha is claimed by more than one task.
- *   remediations         - Placeholder rule engine; returns an empty array until Task 9.
+ *   overwrittenBy        - Names the later commit that owns a file at HEAD once a task's lines are gone.
+ *   DISCARDED_BELOW      - Survival ratio under which a task counts as discarded work.
+ *   isDiscarded          - True for a task that reached a commit, authored lines, and lost them.
+ *   remediations         - Rule engine: emits R2 "discarded work" cards with a prompt for Bob.
  */
 import { execFileSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
@@ -453,10 +456,18 @@ export function attributeTask(repo, entry, opts = {}) {
     ? taskSurvival(repo, commit.sha, files, commit.bobLines)
     : { authored: 0, survived: 0, pct: null, files: [], unmatched: files };
 
+  // Who owns the code now. Only asked when the work is actually gone: it is a
+  // second blame pass, and on a healthy task there is nobody to name.
+  const lost = surv.files.find((f) => f.survived < f.authored);
+  const taken = commit && lost && surv.pct !== null && surv.pct < DISCARDED_BELOW
+    ? overwrittenBy(repo, commit.sha, lost.file, commits)
+    : null;
+
   return {
     id: String(t.id ?? entry._file),
     wroteFiles: files,
     commit: commit ? { sha: commit.sha, short: commit.sha.slice(0, 7), timeMs: commit.timeMs } : null,
+    overwrittenBy: taken,
     authored: surv.authored,
     survived: surv.survived,
     survivalPct: surv.pct,
@@ -484,5 +495,112 @@ export function assertUniqueCommits(tasks) {
   );
 }
 
-// Replaced by the real rule engine in Task 9.
-export function remediations(_tasks) { return []; }
+/**
+ * Which LATER commit owns `file` at HEAD, now that `sha`'s lines are gone.
+ *
+ * "Later" is the whole rule. calc.py at HEAD is 5 lines from the initial commit
+ * and 1 from the human rewrite, so the majority owner is the commit that PREDATES
+ * Bob - naming it would accuse the wrong change. Only a commit after Bob's own can
+ * have overwritten Bob. Ties break toward the most recent, which is the commit a
+ * human would go read first.
+ */
+export function overwrittenBy(repo, sha, file, commits) {
+  const self = commits.find((c) => c.sha === sha);
+  if (!self) return null;
+  let blame;
+  try {
+    blame = git(repo, ['blame', '-w', '-M', '-C', '--line-porcelain', 'HEAD', '--', file]);
+  } catch {
+    return null; // deleted or renamed at HEAD: nobody owns it, so nobody is named.
+  }
+  const owners = new Set();
+  for (const line of blame.split('\n')) {
+    const m = /^([0-9a-f]{40}) \d+ \d+(?: \d+)?$/.exec(line);
+    if (m && m[1] !== sha) owners.add(m[1]);
+  }
+  const winner = commits
+    .filter((c) => c.timeMs > self.timeMs && owners.has(c.sha))
+    .sort((a, b) => b.timeMs - a.timeMs)[0];
+  if (!winner) return null;
+  let subject = '';
+  try {
+    subject = git(repo, ['log', '-1', '--format=%s', winner.sha]).trim();
+  } catch { /* a subject is nice to have; the sha is the evidence */ }
+  return { sha: winner.sha, short: winner.sha.slice(0, 7), subject };
+}
+
+/** Workspace-prefixed path. A bare `calc.py` is ambiguous across three repos. */
+const qualify = (workspace, file) => (workspace ? `${workspace}/${file}` : file);
+
+/** Below this survival ratio a task counts as discarded work. One definition, imported. */
+export const DISCARDED_BELOW = 0.25;
+
+/**
+ * DISCARDED WORK: the task DID land in a commit and a human then overwrote it.
+ * Measured against git blame at HEAD. Real, attributable spend - and distinct from
+ * `unattributed`, a task that never reached a commit at all (a throwaway spike:
+ * nothing was overwritten, so counting it here would inflate the loss).
+ */
+export const isDiscarded = (t) =>
+  Boolean(t.commit) && t.authored > 0 && t.survivalPct !== null && t.survivalPct < DISCARDED_BELOW;
+
+/**
+ * R2 "discarded work": Bob was paid for lines a human then overwrote. The only
+ * rule whose fix is a diff Bob can produce, which is why SCHEDULE.md §3b makes it
+ * the loop-close candidate - `action` must therefore name a real repo-relative
+ * path, and `prompt` must be something an operator can paste into Bob unedited.
+ *
+ * Pure: it reads the attributed task rows and shells out to nothing, so the
+ * dashboard and the tests can call it on committed JSON with no repo on disk.
+ * The git evidence it quotes (`overwrittenBy`) is collected during attribution.
+ *
+ * ponytail: R2 only. R1/R3/R4 from the spec are workspace settings and process
+ * advice - none is a file edit, so none can close the loop. Add them when the UI
+ * has somewhere to put a non-actionable card.
+ */
+export function remediations(tasks) {
+  return tasks
+    .filter(isDiscarded)
+    // Highest spend first: the money is the ranking, there is no second signal yet.
+    .sort((a, b) => b.coins - a.coins)
+    .flatMap((t) => {
+      // The file that took the loss. No breakdown means the lines could not be
+      // located at all - that is a path-drift report (`unmatchedFiles`), not a
+      // remediation, and inventing a target file here would be a guess.
+      const worst = (t.fileBreakdown ?? []).find((f) => f.survived < f.authored);
+      if (!worst) return [];
+      const target = qualify(t.workspace, worst.file);
+      const lost = worst.authored - worst.survived;
+      const plural = lost === 1 ? 'line' : 'lines';
+      const by = t.overwrittenBy;
+      const culprit = by ? `${by.short}${by.subject ? ` ("${by.subject}")` : ''}` : null;
+      return [{
+        id: `R2-${t.id.slice(0, 8)}`,
+        rule: 'R2',
+        taskId: t.id,
+        workspace: t.workspace ?? null,
+        file: target,
+        coins: t.coins,
+        authored: worst.authored,
+        survived: worst.survived,
+        title: `${t.coins} Bobcoins bought ${lost} ${plural} of ${target} that ${lost === 1 ? 'is' : 'are'} gone`,
+        detail:
+          `Commit ${t.commit.short} added ${worst.authored} ${worst.authored === 1 ? 'line' : 'lines'}`
+          + ` to ${target} for this task; git blame at HEAD attributes ${worst.survived} of them to it.`
+          + (culprit ? ` Commit ${culprit} owns that code now.` : ''),
+        // The §3b loop-close candidate string. It names a path on purpose.
+        action:
+          `Re-add ${lost} ${plural} task ${t.id.slice(0, 8)} wrote to ${target},`
+          + ' or add a test asserting they are intentionally absent.',
+        prompt:
+          `In ${target}, the ${lost === 1 ? 'line' : `${lost} lines`} you wrote in commit ${t.commit.short}`
+          + ` ${lost === 1 ? 'was' : 'were'} replaced`
+          + (culprit ? ` by ${culprit}` : ' by a later commit')
+          + `. Read the file as it stands at HEAD and decide which version is right.`
+          + ' If the current one is better, leave it alone and add a short test or comment'
+          + ' recording that the earlier version was dropped on purpose. If something was lost,'
+          + ` put it back without undoing the rest of ${culprit ? culprit.split(' ')[0] : 'that commit'}.`
+          + ' Reply with what you changed and why.',
+      }];
+    });
+}

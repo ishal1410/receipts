@@ -7,18 +7,23 @@
 // (checked in, run through tools/redact.mjs, zero username hits). The git side of
 // the join cannot be checked in - a .git directory carries the author's name and
 // email - so tools/fixtures/history.json records the real commit contents,
-// messages and committer timestamps, and buildRepo() replays them into a temp
-// directory. Same bytes, same times, same diffs; only the shas differ per run,
-// which is why the tests resolve a sha by commit message instead of hardcoding it.
+// messages and committer timestamps, and buildRepo() (tools/replay.mjs) replays them
+// into a temp directory. Same bytes, same times, same diffs; only the shas differ per
+// run, which is why the tests resolve a sha by commit message instead of hardcoding
+// it - and why `node tools/replay.mjs` compares verdicts rather than hashes.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import * as chk from './lib.mjs';
+// ONE reconstruction mechanism, shared with the judge-facing `node tools/replay.mjs`:
+// if this suite replayed the fixture history its own way, the two could drift and a
+// green suite would stop being evidence that the replay works.
+import { buildRepo } from './replay.mjs';
 
 const {
   normalisePath, loadSessions, writtenFiles, classifyTools,
@@ -28,48 +33,16 @@ const {
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const FIXTURES = fileURLToPath(new URL('./fixtures/', import.meta.url));
-const HISTORY = JSON.parse(readFileSync(path.join(FIXTURES, 'history.json'), 'utf8'));
 
 // The workspace string as the redacted exports actually spell it. It is compared
 // as a STRING PREFIX against the _meta.changes keys - it is never opened - so the
 // replayed repo living somewhere else on disk is irrelevant to the join.
 const WS = 'file:c:\\Users\\USER\\bobtest';
 
+// The temp repos this file creates for its own one-off histories. buildRepo()
+// cleans up the ones IT creates.
 const trash = [];
 process.on('exit', () => { for (const d of trash) rmSync(d, { recursive: true, force: true }); });
-
-/** Replay one fixture history into a fresh temp repo. Returns { dir, sha(message) }. */
-function buildRepo(name) {
-  const dir = mkdtempSync(path.join(tmpdir(), `chk-${name}-`));
-  trash.push(dir);
-  const g = (...a) => execFileSync('git', a, { cwd: dir, encoding: 'utf8' });
-  g('init', '-q', '-b', 'main');
-  g('config', 'user.email', 'fixture@example.invalid');
-  g('config', 'user.name', 'fixture');
-  g('config', 'core.autocrlf', 'false'); // else every line differs from the export
-  for (const c of HISTORY[name]) {
-    for (const [f, body] of Object.entries(c.files)) {
-      mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
-      writeFileSync(path.join(dir, f), body);
-    }
-    g('add', '-A');
-    // Committer time is what commitLog() reads and what the join compares against
-    // task.updatedAt, so it has to be the real one, not "now".
-    const iso = new Date(c.ts * 1000).toISOString();
-    execFileSync('git', ['commit', '-qm', c.message], {
-      cwd: dir,
-      encoding: 'utf8',
-      env: { ...process.env, GIT_AUTHOR_DATE: iso, GIT_COMMITTER_DATE: iso },
-    });
-  }
-  const sha = (message) => {
-    const out = g('log', '--format=%H %s', 'HEAD').split('\n')
-      .find((l) => l.slice(41) === message);
-    assert.ok(out, `fixture history has no commit "${message}"`);
-    return out.slice(0, 40);
-  };
-  return { dir, sha };
-}
 
 const A = buildRepo('repo-a');
 const B = buildRepo('repo-b');
@@ -423,4 +396,77 @@ test('the remediation engine emits at least one FILE-EDIT candidate for the loop
     + '  THE FIX: Task 12\'s demo-dataset freeze manufactures the near-0% `control` exemplar '
     + '(rewrite a Bob-authored file in place, never delete it - `git blame HEAD` fatals on a path '
     + 'absent at HEAD). That one task unlocks R2, and R2 is what unlocks the loop-close.');
+});
+
+// ------------------------------------------------------- R2: discarded work
+// The rule the loop-close depends on, exercised against the replayed fixture
+// history (repo-a: A initial calc -> B Bob's docstring -> C human rewrites it)
+// rather than the shipped corpus, so it still means something on a fresh clone.
+
+test('overwrittenBy names the LATER commit that owns the file at HEAD', () => {
+  const bob = A.sha("B: docstring on add (by Bob)");
+  const w = chk.overwrittenBy(A.dir, bob, 'calc.py', commitLog(A.dir));
+  assert.ok(w, 'a task whose line is gone must be able to name who owns it now');
+  assert.equal(w.subject, "C: human rewrites Bob's docstring");
+  assert.equal(w.short, w.sha.slice(0, 7));
+  // f7e2ca4 ("A: initial calc") owns MORE lines of calc.py at HEAD than C does.
+  // Picking the majority owner would name the wrong commit; only commits after
+  // Bob's own can have overwritten Bob.
+  assert.notEqual(w.sha, A.sha('A: initial calc'));
+});
+
+test('attributeTask records overwrittenBy on a task whose lines did not survive', () => {
+  const e = byId(SESSIONS_A)['d0259633'];
+  const row = attributeTask(A.dir, e);
+  assert.equal(row.survivalPct, 0);
+  assert.equal(row.overwrittenBy?.subject, "C: human rewrites Bob's docstring");
+});
+
+test('R2 fires on discarded work and hands Bob a file-edit prompt', () => {
+  const discarded = {
+    id: 'd0259633f134c3db6bfd3e596a142240',
+    workspace: 'bobtest',
+    coins: 0.285058,
+    commit: { sha: '2d6bacb6af92a3303865111b8770dc93d6aa2a1a', short: '2d6bacb' },
+    authored: 1,
+    survived: 0,
+    survivalPct: 0,
+    fileBreakdown: [{ file: 'calc.py', authored: 1, survived: 0 }],
+    overwrittenBy: { short: '8e8b929', subject: "C: human rewrites Bob's docstring" },
+  };
+  const [r, ...rest] = chk.remediations([discarded]);
+  assert.equal(rest.length, 0);
+  assert.equal(r.rule, 'R2');
+  assert.equal(r.taskId, discarded.id);
+  assert.equal(r.workspace, 'bobtest');
+  assert.equal(r.file, 'bobtest/calc.py');
+  assert.equal(r.coins, 0.285058);
+  assert.equal(r.authored, 1);
+  assert.equal(r.survived, 0);
+  assert.ok(r.id.includes('d0259633'), 'id must identify the task it came from');
+  // The three human-facing strings. `detail` is the evidence line, so it has to
+  // name the commit that took the work - a claim with no sha is not a receipt.
+  for (const k of ['title', 'detail', 'prompt', 'action']) {
+    assert.equal(typeof r[k], 'string', `${k} must be a string`);
+    assert.ok(r[k].length > 10, `${k} must say something`);
+  }
+  assert.ok(r.detail.includes('8e8b929'), 'detail must name the overwriting commit');
+  assert.ok(r.prompt.includes('bobtest/calc.py'),
+    'the prompt is pasted into Bob in another workspace: a bare filename is ambiguous');
+});
+
+test('R2 stays silent on healthy work and on tasks that never reached a commit', () => {
+  const healthy = {
+    id: 'aaa', workspace: 'bobtest', coins: 1, commit: { sha: 'x', short: 'x' },
+    authored: 10, survived: 10, survivalPct: 1,
+    fileBreakdown: [{ file: 'calc.py', authored: 10, survived: 10 }],
+  };
+  // A spike that never committed is a THROWAWAY, not discarded work: no human
+  // overwrote it, so there is nothing to reconcile and nothing to accuse.
+  const spike = {
+    id: 'bbb', workspace: 'bobtest', coins: 1, commit: null,
+    authored: 0, survived: 0, survivalPct: null,
+    fileBreakdown: [], unattributed: 'no-matching-commit',
+  };
+  assert.deepEqual(chk.remediations([healthy, spike]), []);
 });

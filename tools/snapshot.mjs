@@ -6,7 +6,7 @@ import path from 'node:path';
 import {
   loadSessions, commitLog, attributeTask, git,
 } from './lib.mjs';
-import { remediations } from './lib.mjs';
+import { remediations, isDiscarded } from './lib.mjs';
 // public/analysis.json is COMMITTED to a public repo and is built out of Bob
 // exports, which carry env blocks, absolute C:\Users\<you> paths, source code and
 // unified diffs. ritual.mjs scans those exports on the way IN; without this,
@@ -85,6 +85,9 @@ for (const pair of PAIRS) {
       contextTokens: Number(t.costs?.contextTokens ?? 0),
       wroteFiles: attr.wroteFiles,
       commit: attr.commit ? { ...attr.commit, shared: false } : null,
+      // Who owns the overwritten code at HEAD. remediations() quotes it as the
+      // evidence line, so dropping it here would ship an accusation with no sha.
+      overwrittenBy: attr.overwrittenBy,
       authored: attr.authored,
       survived: attr.survived,
       survivalPct: attr.survivalPct,
@@ -118,14 +121,11 @@ const counts = new Map();
 for (const t of tasks) if (t.commit) counts.set(t.commit.sha, (counts.get(t.commit.sha) ?? 0) + 1);
 for (const t of tasks) if (t.commit && counts.get(t.commit.sha) > 1) t.commit.shared = true;
 
-// Two different losses, never added together:
-//   discardedWork  - the task DID land in a commit and a human then overwrote it.
-//                    Measured against git blame at HEAD. Real, attributable spend.
-//   unattributed   - the task never reached any commit at all: a throwaway spike.
-//                    Nothing was overwritten, so calling it discarded work would
-//                    inflate the number with work that was never delivered.
-const isDiscarded = (t) => t.commit !== null && t.authored > 0
-  && t.survivalPct !== null && t.survivalPct < 0.25;
+// Two different losses, never added together: `discardedWork` (isDiscarded, in
+// lib.mjs - the task landed in a commit a human then overwrote) and `unattributed`
+// (the task never reached any commit: a throwaway spike, nothing was overwritten).
+// isDiscarded is imported, not re-declared: R2 must select exactly the tasks this
+// headline counts, or the dashboard shows a loss with no remediation behind it.
 
 const analysis = {
   generatedAt: new Date().toISOString(),

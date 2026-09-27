@@ -26,7 +26,7 @@ function Line({ label, value, sub, tone }: {
 }
 
 export default function Summary({ analysis }: { analysis: Analysis }) {
-  const { totals, remediations, tasks } = analysis;
+  const { totals, tasks } = analysis;
   // NEVER fall back to 0 here. A total join failure (every task unattributed) would
   // render "0.0%", a confident, plausible, WRONG headline on the public URL, which is
   // the one measured claim this entry rests on. An unknown must look unknown.
@@ -100,14 +100,21 @@ export default function Summary({ analysis }: { analysis: Analysis }) {
         )}
       </div>
 
-      {/* remediations may legitimately be empty and that is a result, not a missing
-          card. Say it in a sentence; do not invent a card to fill. */}
+      {/* REGRESSION THE RULE ENGINE INTRODUCED, fixed here. This used to read
+          `remediations.length > 0 ? "N remediations raised." : <the real sentence>`,
+          which was harmless only while the array was always empty. The moment the
+          engine started writing to it, the informative branch went dead and the
+          total's closing line collapsed to a bare count of something the reader
+          could not yet see.
+          The count is gone rather than moved: the Remediations panel directly below
+          renders the items themselves, so announcing how many there are one panel
+          earlier is a stub pointing at a thing already on screen. What is left is
+          the sentence that was always the useful one, and it now reads as the
+          lead-in to that panel. */}
       <p className="perf text-xs leading-relaxed text-[var(--color-muted)]">
-        {remediations.length > 0
-          ? `${remediations.length} remediation${remediations.length === 1 ? '' : 's'} raised.`
-          : deadLines === 0 && unjoined === 0
-            ? 'No remediations raised: nothing this agent wrote has been discarded, and no task failed to join a commit.'
-            : [
+        {deadLines === 0 && unjoined === 0
+          ? 'Nothing this agent wrote has been discarded, and no task failed to join a commit.'
+          : [
                 deadLines > 0 &&
                   `${deadLines} authored line${deadLines === 1 ? ' reached a commit and was' : 's reached a commit and were'} later replaced by a human.`,
                 unjoined > 0 &&
