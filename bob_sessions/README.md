@@ -16,7 +16,7 @@ there are no `reports/` or `screenshots/` subdirectories.
 | task | slug | what Bob did |
 |---|---|---|
 | 01 | `lib_rename` | Moved `tools/_chk.mjs` to `tools/lib.mjs` and fixed the three import/path lines the move broke. |
-| 02 | `lib_jsdoc` | Wrote the JSDoc file header on `tools/lib.mjs`, describing the survival join. |
+| 02 | `lib_jsdoc` | Wrote the JSDoc file header on `tools/lib.mjs`, describing the survival join. 25 lines; 24 still at HEAD. |
 
 Two tasks, six files, all three counts equal. Verify it yourself:
 
@@ -58,6 +58,14 @@ task 02 was a comment block. The survival join in `tools/lib.mjs`, the snapshot 
 the React components and the tools were written before and around those two tasks, not by
 them. The dashboard does not hide this — it publishes Bob's authored line count per task,
 and you can read it off the live page.
+
+**And we overwrote some of it ourselves.** One line of task 02's header read
+`remediations - Placeholder rule engine; returns an empty array until Task 9.`
+Implementing that engine rewrote the line, so task 02 now measures 24 of its 25 lines
+surviving and the corpus total moved from 28 of 29 to 27 of 29. Nobody edited a figure;
+`git blame` changed and the snapshot followed. The same thing the `bobtest` case below
+demonstrates, done by this project's own maintainers while building the tool that
+measures it.
 
 The `bobtest` workspace carries the case that matters. Commit `2d6bacb`
 ("B: docstring on add (by Bob)") is followed immediately by `8e8b929`

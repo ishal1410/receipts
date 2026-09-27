@@ -1,6 +1,6 @@
 # Receipts
 
-Receipts reads IBM Bob's exported task-session JSON and shows, per task, what was spent, whether that task's code is still in the repo, and where the context budget went. Live at https://receipts-black-five.vercel.app — repo at https://github.com/ishal1410/receipts.
+Receipts reads IBM Bob's exported task-session JSON and shows, per task, what was spent, whether that task's code is still in the repo, and where the context budget went. Live at https://receipts-black-five.vercel.app — [deck](https://receipts-black-five.vercel.app/receipts-deck.pdf) — repo at https://github.com/ishal1410/receipts.
 
 ## Why
 
@@ -10,13 +10,14 @@ Two things become visible once you read it. First, where the context budget actu
 
 ## What it shows
 
-One dataset, in page order:
+The page in section order, every section reading the same committed file:
 
-- **Provenance** — the same figures in three artifacts side by side: Bob's own IDE consumption screenshot, the committed export, and the numbers read back out of `analysis.json` at runtime.
-- **The context finding** — where each task's window went before the prompt arrived, by category (skills, tool definitions, project rules, the rest).
-- **The task table** — every Bob task in the corpus, its cost in Bobcoins, and a survival verdict for the code it wrote.
-- **The totals** — coins spent, lines authored, lines still at HEAD, tasks that never joined a commit.
-- **Remediations** — the discarded-work row turned into a prompt an operator can paste into Bob. Nothing on this page has been run, pasted or sent. Receipts emits the text; a human decides.
+- **Provenance** — one figure chased through three artifacts: `0.469` in Bob's own IDE panel, `0.468592` in the committed export, `0.468592` printed out of `analysis.json` at runtime.
+- **The finding** — how much of each session's context window went to skill definitions before the operator typed a word.
+- **The ledger** — every session joined to the commit it produced. Expand a row for the files, the commit and the window; where no join was possible, the reason is stated rather than left as a zero to be misread as "wrote nothing".
+- **Paid for, then deleted** — the discarded-work case on its own.
+- **The totals** — what the agent cost and what is left of it, drawn as one square per authored line, lit if git blame still credits it to Bob at HEAD.
+- **The open item** — the one remediation, as text to paste into Bob. Its closing panel is headed *No loop was closed*, and means it.
 
 Corpus: 6 Bob tasks across 3 workspaces — 2 in this repo's `bob_sessions/`, 3 in `tools/fixtures/repo-a/` (workspace `bobtest`), 1 in `tools/fixtures/repo-b/` (`bobtest2`). All six are real redacted Bob exports, not synthetic scaffolding: `tools/fixtures/` is the dataset, and the repo's own test suite happens to run against it too. Live figures — coins, survival, token counts — come from `public/analysis.json`, which is where you should read them rather than from this file.
 
@@ -77,6 +78,8 @@ Two limits, which the command prints for itself:
 
 In the `bobtest` workspace, commit `2d6bacb` ("B: docstring on add (by Bob)") is followed immediately by `8e8b929` ("C: human rewrites Bob's docstring"). Bob task `d0259633…` was paid **0.285058 coins**, its output was approved, and a human overwrote it one commit later. Nothing failed and no error was raised anywhere: the coins were spent, the work landed, and it was gone by the next commit. That one row is why the survival column exists, and it is the only remediation the engine emits on this corpus.
 
+**Then it happened to us, mid-build.** Bob's task 02 wrote a 25-line JSDoc header on `tools/lib.mjs`, one line of which read `remediations - Placeholder rule engine; returns an empty array until Task 9.` Implementing that rule engine rewrote the line. Task 02 now measures 24 of 25 surviving and the corpus total fell from 28 of 29 to 27 of 29 — while we were building the thing that measures exactly this, nobody edited a number, and `git blame` moved on its own. That is the difference between a measurement and a figure typed into a slide.
+
 It is a different failure from a task that never reached a commit at all. A throwaway spike — Bob asked to try something, output never committed — has no commit to join against and shows as unjoined. Discarded work *did* land and *was* then replaced. Receipts keeps the two apart; conflating them would let "we never meant to keep it" absorb "a human rejected it after paying for it."
 
 ## What Bob measures about skills, and discards
@@ -113,9 +116,9 @@ Each workspace joins against its own git history. A task is never matched to a c
 
 Bob is the only input. Receipts accepts nothing else — no arbitrary JSON upload, no manual entry. Take Bob out and the product has zero inputs. Export is manual and on your command; Receipts reads what the export already contains and adds nothing of its own.
 
-Bob also built part of this repo, and `bob_sessions/` is the evidence: two complete trios of export JSON, history markdown and consumption-summary screenshot, one per task. What Bob did here, factually: task 01 moved `tools/_chk.mjs` to `tools/lib.mjs` (and its test alongside) and fixed three lines in the test file. Task 02 wrote the JSDoc file header on `tools/lib.mjs`. That is 28 lines across two files. The rest of this repo is hand-written; Receipts does not claim otherwise, and the dashboard publishes the per-task authored line count either way.
+Bob also built part of this repo, and `bob_sessions/` is the evidence: two complete trios of export JSON, history markdown and consumption-summary screenshot, one per task. What Bob did here, factually: task 01 moved `tools/_chk.mjs` to `tools/lib.mjs` (and its test alongside) and fixed three lines in the test file. Task 02 wrote the JSDoc file header on `tools/lib.mjs`. That is 28 lines across two files, 27 of them still at HEAD in this repo. The rest is hand-written; Receipts does not claim otherwise, and the dashboard publishes the per-task authored line count either way.
 
-That is the whole claim about Bob's authorship, and it is deliberately unflattering. The interesting thing is not how much Bob wrote — it is that across 6 tasks in 3 repos its work is instrumented and measured here, including the one case where a human threw it away.
+That is the whole claim about Bob's authorship, and it is deliberately unflattering. What matters is not how much Bob wrote but that all 6 tasks across 3 repos are instrumented here — including both cases where a human overwrote the work, one of them ours.
 
 ## Run it yourself
 
