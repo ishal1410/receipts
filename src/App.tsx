@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MotionConfig } from 'motion/react';
 import type { Analysis } from './types';
+import Finding from './components/Finding';
 import Summary from './components/Summary';
 import TaskTable from './components/TaskTable';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -48,6 +49,15 @@ function missingFields(d: Analysis): string[] {
     // survivalPct is legitimately null for an unattributed task, so null passes
     // here — SurvivalBar is the component that handles it.
     if (t.survivalPct !== null && typeof t.survivalPct !== 'number') bad.push('tasks[].survivalPct');
+    // Added with the Finding panel, which divides by context.total, calls
+    // toLocaleString on context.reportedTotal and reads .length on loadedSkills.
+    if (!t.context) bad.push('tasks[].context');
+    else {
+      num(t.context.total, 'tasks[].context.total');
+      num(t.context.reportedTotal, 'tasks[].context.reportedTotal');
+      if (!t.context.breakdown) bad.push('tasks[].context.breakdown');
+      if (!Array.isArray(t.context.loadedSkills)) bad.push('tasks[].context.loadedSkills');
+    }
   }
   return bad;
 }
@@ -78,15 +88,24 @@ export default function App() {
     // motion/react animates via WAAPI, so prefers-reduced-motion in index.css
     // silences the pill and the row hover but NOT these panel entrances.
     <MotionConfig reducedMotion="user">
-    <div className="min-h-dvh px-6 py-10 md:px-10">
-      <header className="mx-auto max-w-6xl">
-        <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--color-muted)]">
-          IBM Bob session forensics
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold">Receipts</h1>
-        <p className="mt-2 max-w-xl text-sm text-[var(--color-muted)]">
-          What the agent spent, and whether the code it wrote is still here.
-        </p>
+    <div className="min-h-dvh px-4 py-10 sm:px-6 md:px-10">
+      <header className="mx-auto flex max-w-6xl flex-wrap items-end justify-between gap-x-8 gap-y-3">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--color-muted)]">
+            IBM Bob session forensics
+          </p>
+          <h1 className="mt-2">Receipts</h1>
+          <p className="mt-2 max-w-md text-sm text-[var(--color-muted)]">
+            What the agent spent, what it spent it on, and whether the code it wrote is
+            still here.
+          </p>
+        </div>
+        {s.k === 'ready' && (
+          <p className="text-xs text-[var(--color-muted)]">
+            One snapshot of{' '}
+            <span className="num">{s.data.repo.headShort}</span>
+          </p>
+        )}
       </header>
 
       {/* ErrorBoundary wraps <main> only: the header and footer are static text and
@@ -117,18 +136,25 @@ export default function App() {
         )}
         {s.k === 'ready' && (
           <>
-            <Summary analysis={s.data} />
+            <Finding analysis={s.data} />
             <TaskTable tasks={s.data.tasks} />
+            <Summary analysis={s.data} />
           </>
         )}
       </main>
       </ErrorBoundary>
 
       {s.k === 'ready' && (
-        <footer className="mx-auto mt-10 max-w-6xl text-xs text-[var(--color-muted)]">
-          Generated {new Date(s.data.generatedAt).toUTCString()} at
-          <span className="num"> {s.data.repo.headShort}</span> ·
-          {' '}{s.data.repo.commitCount} commits
+        // Wording is deliberate: this page renders ONE snapshot file, so it can only
+        // ever be as fresh as that file. "Generated <now>" implied the figures track
+        // the repository live; they describe the commit named here and nothing after
+        // it. Same data, no implied freshness.
+        <footer className="mx-auto mt-10 max-w-6xl text-xs leading-relaxed text-[var(--color-muted)]">
+          Every figure on this page describes one snapshot: commit{' '}
+          <span className="num">{s.data.repo.headShort}</span>,{' '}
+          <span className="num">{s.data.repo.commitCount}</span> commits in,
+          taken {new Date(s.data.generatedAt).toUTCString()}. Nothing committed after
+          that is counted here.
         </footer>
       )}
     </div>
