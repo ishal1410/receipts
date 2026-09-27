@@ -50,7 +50,7 @@ export default function Summary({ analysis }: { analysis: Analysis }) {
         />
         <Line
           label="Lines still at HEAD"
-          value={pct === null ? '—' : `${totals.survived} of ${totals.authored}`}
+          value={pct === null ? 'not known' : `${totals.survived} of ${totals.authored}`}
           tone={pct === null ? undefined : 'var(--color-live)'}
           sub={
             pct === null
