@@ -4,9 +4,16 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Receipts — Bob session forensics</title>
+    <meta name="color-scheme" content="dark" />
+    <!-- Painted before the CSS arrives, so a cold load never flashes white. -->
+    <meta name="theme-color" content="#050505" />
+    <title>Receipts — forensic accounting for an AI coding agent</title>
+    <meta
+      name="description"
+      content="Receipts reads IBM Bob's own task export and answers what the agent cost, where its context window actually went, and whether the code it wrote is still in the repository."
+    />
   </head>
-  <body>
+  <body style="background:#050505">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

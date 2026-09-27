@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-09-27T07:36:13.858Z",
+  "generatedAt": "2026-09-27T08:49:19.907Z",
   "_generatedIn": {
-    "headSha": "b5def2ce65713d87298da34901f3d27b55207830",
-    "commitCount": 19,
+    "headSha": "3f802ce6cf68c98fd0b34445b7e379a80eea4f45",
+    "commitCount": 20,
     "isShallowRepo": false
   },
   "repo": {
-    "head": "b5def2ce65713d87298da34901f3d27b55207830",
-    "headShort": "b5def2c",
-    "commitCount": 19
+    "head": "3f802ce6cf68c98fd0b34445b7e379a80eea4f45",
+    "headShort": "3f802ce",
+    "commitCount": 20
   },
   "workspaces": [
     "bobtest",
@@ -20,7 +20,7 @@
     "tasks": 6,
     "coins": 1.894928,
     "authored": 29,
-    "survived": 28,
+    "survived": 27,
     "contextTokens": 240259,
     "unattributed": 3,
     "discardedWork": 1,
@@ -308,13 +308,13 @@
       },
       "overwrittenBy": null,
       "authored": 25,
-      "survived": 25,
-      "survivalPct": 1,
+      "survived": 24,
+      "survivalPct": 0.96,
       "fileBreakdown": [
         {
           "file": "tools/lib.mjs",
           "authored": 25,
-          "survived": 25
+          "survived": 24
         }
       ],
       "unmatchedFiles": [],
